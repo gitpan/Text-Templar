@@ -2,7 +2,7 @@
 ################################################################################
 #
 #  Text::Templar
-#  $Id: Templar.pm,v 2.35 2001/09/24 23:13:16 deveiant Exp $
+#  $Id: Templar.pm,v 2.37 2001/12/31 21:29:31 deveiant Exp $
 #
 #  Authors: Michael Granger <ged@FaerieMUD.org>
 #  and Dave McCorkhill <scotus@FaerieMUD.org>
@@ -34,8 +34,8 @@ BEGIN {
 
 	###	Package globals
 	use vars	qw{$VERSION $RCSID $AUTOLOAD};
-    $VERSION	= do { my @r = (q$Revision: 2.35 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-	$RCSID		= q$Id: Templar.pm,v 2.35 2001/09/24 23:13:16 deveiant Exp $;
+    $VERSION	= do { my @r = (q$Revision: 2.37 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+	$RCSID		= q$Id: Templar.pm,v 2.37 2001/12/31 21:29:31 deveiant Exp $;
 
 	### Prototypes for overridden methods (These don't work now for some strange
 	### reason I haven't yet figured out.)
@@ -1469,22 +1469,27 @@ sub renderFOREACH {
 	### out of the results of calling the method chain on the object/s
 	if ( $node->object && $node->methodchain ) {
 
+		$nodeName = $node->object;
+
 		### Iterate over the objects, calling the method chain on each one
 		foreach my $object ( $self->getNodeContent($node->object) ) {
 			my @results = $self->_traverseMethodChain( $object, $node->methodchain );
 
-			if ( $node->deref ) {
+			if ( $node->pair ) {
+				@iteratedContent = $self->_buildHashIteratedContent( $node, @results );
+			}
+
+			elsif ( $node->deref ) {
 				foreach my $result ( @results ) {
 					push @iteratedContent, $self->_deref( $result );
 				}
 			}
 
 			else {
-				push @iteratedContent, @results;
+				@iteratedContent = @results;
 			}
 		}
 
-		$nodeName = $node->object;
 	}
 
 	### If the foreach is a dereference, figure out how to dereference the
@@ -1497,10 +1502,21 @@ sub renderFOREACH {
 		$nodeName = $node->object;
 	}
 
-	### If there's no object and methodchain, just use the regular node content
+	### It's just plain content
 	else {
-		@iteratedContent = $self->getNodeContent( $node->object || $node->name );
+
 		$nodeName = $node->object || $node->name;
+
+		# Build an array of hashrefs if it's a hash iterator
+		if ( $node->pair ) {
+			my @results = $self->getNodeContent( $node->object || $node->name );
+			@iteratedContent = $self->_buildHashIteratedContent( $node, @results );
+		}
+
+		# Otherwise, just fetch the content
+		else {
+			@iteratedContent = $self->getNodeContent( $node->object || $node->name );
+		}
 	}
 
 	### Build a shortcut for accessing the iterator. This will show up in the
@@ -2007,6 +2023,45 @@ sub _GetParser {
 }
 
 
+### (PROTECTED) METHOD: _buildHashIteratedContent( $node, @content )
+### Attempt to build a list of hashrefs with key and value pairs for hash
+### iterators.
+sub _buildHashIteratedContent {
+	my $self	= shift		or throw Text::Templar::Exception::MethodError;
+	my $node	= shift		or throw Text::Templar::Exception::ParamError 1, "node";
+	my @content = @_;
+
+	throw Text::Templar::Exception::ParamError "node", ["Text::Templar::Node"], $node
+		unless blessed $node && $node->isa( "Text::Templar::node" );
+
+	my @iteratedContent = ();
+
+	# If we got one result and it's a hashref, map the single hash
+	# into a list of hashrefs with key and value pairs
+	if ( @content == 1 && ref $content[0] eq 'HASH' ) {
+		push @iteratedContent,
+			map {{ key => $_, value => $content[0]{$_} }} keys %{$content[0]};
+	}
+
+	# If we got an even array of content, it must be a regular
+	# hash, so shift 'em off two at a time to build our hashrefs
+	elsif ( @content % 2 == 0 ) {
+		while ( @content ) {
+			push @iteratedContent, {
+				key => shift @content,
+				value => shift @content,
+			};
+		}
+	} else {
+		my $nodeName = $node->name;
+		throw Text::Templar::Exception
+			"Cannot do hash iteration: Pair value for '$nodeName' is neither hash nor hashref.";
+	}
+
+	return @iteratedContent;
+}
+
+
 ### (PROTECTED) METHOD: _parseTemplateSource( \@source, $sourceName )
 ###	Parse the given source and return a syntax tree
 sub _parseTemplateSource {
@@ -2157,6 +2212,8 @@ sub _findFile {
 		$path,					# The returned path
 		@pathsToCheck,			# The array of directories to check for the file
 	   );
+
+	$filename =~ s{^(["'])(.+)(\1)$}{$1};
 
 	### If they passed an absolute path, test for readability.
 	if ( $filename =~ m{^/} ) {
@@ -2670,6 +2727,11 @@ DESTROY		{}
 ###	T R I V I A L   N O D E   C L A S S E S
 ###############################################################################
 
+### Turn off redefined warnings for the node classes, as under mod_perl they all
+### warn. I still don't know why, as they're in completely different packages,
+### right?
+#no warnings 'redefine';
+
 ### These classes are used by the parser to construct a node-tree representation
 ### of the parsed template content. Each node is represented by an object, all
 ### of which inherit from Text::Templar::node.
@@ -2711,7 +2773,7 @@ DESTROY		{}
 ###		they are followed directly by a newline
 {
 	package Text::Templar::chompednode;
-	use base qw{Text::Templar::node};
+	our @ISA = qw{Text::Templar::node};
 
 	sub needsChomp { return 1 }
 }
@@ -2720,7 +2782,7 @@ DESTROY		{}
 ### Container node base class
 {
 	package Text::Templar::containernode;
-	use base qw{Text::Templar::chompednode};
+	our @ISA = qw{Text::Templar::chompednode};
 	use vars qw{$AUTOLOAD};
 
 	sub new {bless [{},[]], shift}
@@ -2748,7 +2810,7 @@ DESTROY		{}
 ###		they are followed directly by a newline
 {
 	package Text::Templar::conditionalnode;
-	use base qw{Text::Templar::containernode};
+	our @ISA = qw{Text::Templar::containernode};
 
 }
 
@@ -2756,7 +2818,7 @@ DESTROY		{}
 ### Subnode (tag arguments, literals, etc.) base class
 {
 	package Text::Templar::subnode;
-	use base qw{Text::Templar::node};
+	our @ISA = qw{Text::Templar::node};
 
 	sub content {
 		my $self = shift or return undef;
@@ -2775,7 +2837,7 @@ DESTROY		{}
 ### Matchnode (Matchspec) abstract class
 {
 	package Text::Templar::matchnode;
-	use base qw{Text::Templar::subnode};
+	our @ISA = qw{Text::Templar::subnode};
 
 	sub matches {
 		my $self = shift or return undef;
@@ -2784,32 +2846,32 @@ DESTROY		{}
 }
 
 ### Directive node child classes
-{	package Text::Templar::METHODCALL;	use base qw{Text::Templar::node}}
-{	package Text::Templar::METHOD;		use base qw{Text::Templar::node}}
-{	package Text::Templar::DUMP;		use base qw{Text::Templar::node}}
-{	package Text::Templar::DEFINE;		use base qw{Text::Templar::chompednode}}
-{	package Text::Templar::STOP;		use base qw{Text::Templar::chompednode}}
-{	package Text::Templar::EVAL;		use base qw{Text::Templar::node}}
-{	package Text::Templar::INCLUDE;		use base qw{Text::Templar::chompednode}}
-{	package Text::Templar::QUERY;		use base qw{Text::Templar::node}}
-{	package Text::Templar::ENV;			use base qw{Text::Templar::node}}
-{	package Text::Templar::META;		use base qw{Text::Templar::chompednode}}
-{	package Text::Templar::INHERIT;		use base qw{Text::Templar::chompednode}}
+{	package Text::Templar::METHODCALL;	our @ISA = qw{Text::Templar::node}}
+{	package Text::Templar::METHOD;		our @ISA = qw{Text::Templar::node}}
+{	package Text::Templar::DUMP;		our @ISA = qw{Text::Templar::node}}
+{	package Text::Templar::DEFINE;		our @ISA = qw{Text::Templar::chompednode}}
+{	package Text::Templar::STOP;		our @ISA = qw{Text::Templar::chompednode}}
+{	package Text::Templar::EVAL;		our @ISA = qw{Text::Templar::node}}
+{	package Text::Templar::INCLUDE;		our @ISA = qw{Text::Templar::chompednode}}
+{	package Text::Templar::QUERY;		our @ISA = qw{Text::Templar::node}}
+{	package Text::Templar::ENV;			our @ISA = qw{Text::Templar::node}}
+{	package Text::Templar::META;		our @ISA = qw{Text::Templar::chompednode}}
+{	package Text::Templar::INHERIT;		our @ISA = qw{Text::Templar::chompednode}}
 
 ### Container node child classes
-{	package Text::Templar::FOREACH;		use base qw{Text::Templar::containernode}}
-{	package Text::Templar::GREP;		use base qw{Text::Templar::containernode}}
-{	package Text::Templar::MAP;			use base qw{Text::Templar::containernode}}
-{	package Text::Templar::SORT;		use base qw{Text::Templar::containernode}}
-{	package Text::Templar::JOIN;		use base qw{Text::Templar::containernode}}
-{	package Text::Templar::COMMENT;		use base qw{Text::Templar::containernode}}
-{	package Text::Templar::MAXLENGTH;	use base qw{Text::Templar::containernode}}
-{	package Text::Templar::DELAYED;		use base qw{Text::Templar::containernode}}
+{	package Text::Templar::FOREACH;		our @ISA = qw{Text::Templar::containernode}}
+{	package Text::Templar::GREP;		our @ISA = qw{Text::Templar::containernode}}
+{	package Text::Templar::MAP;			our @ISA = qw{Text::Templar::containernode}}
+{	package Text::Templar::SORT;		our @ISA = qw{Text::Templar::containernode}}
+{	package Text::Templar::JOIN;		our @ISA = qw{Text::Templar::containernode}}
+{	package Text::Templar::COMMENT;		our @ISA = qw{Text::Templar::containernode}}
+{	package Text::Templar::MAXLENGTH;	our @ISA = qw{Text::Templar::containernode}}
+{	package Text::Templar::DELAYED;		our @ISA = qw{Text::Templar::containernode}}
 
 ### Conditional and sub-conditional child classes
-{	package Text::Templar::IF;			use base qw{Text::Templar::conditionalnode}}
-{	package Text::Templar::ELSE;		use base qw{Text::Templar::conditionalnode}}
-{	package Text::Templar::ELSIF;		use base qw{Text::Templar::conditionalnode}}
+{	package Text::Templar::IF;			our @ISA = qw{Text::Templar::conditionalnode}}
+{	package Text::Templar::ELSE;		our @ISA = qw{Text::Templar::conditionalnode}}
+{	package Text::Templar::ELSIF;		our @ISA = qw{Text::Templar::conditionalnode}}
 
 
 ### Subnode child classes
@@ -2817,7 +2879,7 @@ DESTROY		{}
 # Literal content
 {
 	package Text::Templar::literal;
-	use base qw{Text::Templar::subnode};
+	our @ISA = qw{Text::Templar::subnode};
 	sub content {
 		my $self = shift or return undef;
 		my $needsChomp = shift || 0;
@@ -2838,7 +2900,7 @@ DESTROY		{}
 # Code block
 {
 	package Text::Templar::codeblock;
-	use base qw{Text::Templar::subnode};
+	our @ISA = qw{Text::Templar::subnode};
 	sub execute {
 		my $self = shift or return undef;
 		my @args = @_;
@@ -2860,7 +2922,7 @@ DESTROY		{}
 # Array argument
 {
 	package Text::Templar::array;
-	use base qw{Text::Templar::matchnode};
+	our @ISA = qw{Text::Templar::matchnode};
 
 	sub content {
 		my $self = shift or return undef;
@@ -2882,7 +2944,7 @@ DESTROY		{}
 # Hash argument
 {
 	package Text::Templar::hash;
-	use base qw{Text::Templar::matchnode};
+	our @ISA = qw{Text::Templar::matchnode};
 
 	sub content {
 		my $self = shift or return undef;
@@ -2906,7 +2968,7 @@ DESTROY		{}
 # Regexp argument
 {
 	package Text::Templar::regexp;
-	use base qw{Text::Templar::matchnode};
+	our @ISA = qw{Text::Templar::matchnode};
 
 	sub content { return shift() }
 
@@ -2921,7 +2983,7 @@ DESTROY		{}
 # Method call
 {
 	package Text::Templar::method;
-	use base qw{Text::Templar::subnode};
+	our @ISA = qw{Text::Templar::subnode};
 
 	sub build {
 		my $self = shift;

@@ -38,9 +38,236 @@ This code is mostly a hacked-up version of the Error.pm module by Graham Barr
 E<lt>gbarr@ti.comE<gt>. Sections which have been copied from or are modified
 versions of synonymous sections of that module are annotated accordingly.
 
+=head2 Procedural Interface
+
+C<Text::Templar::Exceptions> can export subroutines to use for exception
+handling. The following functions can be imported into your package with the
+C<:syntax> tag.
+
+=over 3
+
+=item C<try I<BLOCK> I<CLAUSES>>
+
+C<try> is the main subroutine called by the user. All other subroutines exported
+are clauses to the C<try> subroutine.
+
+The I<BLOCK> will be evaluated and if no error is thrown, it will return the result
+of the block.
+
+I<CLAUSES> are the subroutines below, which describe what to do in the event of
+an error being thrown within I<BLOCK>.
+
+C<Try> works a bit like C<eval E<lt>BLOCKE<gt>> in regards to return value -- it
+evaluates to the value of the last statement executed by any of its clauses
+(including C<catch>, C<otherwise>, or C<finally> clauses), or may be influenced
+by a return within any clause. This allows statements like the following:
+
+  ### Try to get the result of executing the code, ignoring any errors that
+  ### happen within.
+  my $result = try { <unsafe code> };
+
+or
+
+  ### Get the result of the unsafe code if it executed successfully, or 0 if it
+  ### errors for any reason.
+  my $result = try { <unsafe code> } catch Exception with { return 0 };
+
+
+=item C<catch I<CLASS> with I<BLOCK>>
+
+This clause will cause all errors that satisfy C<$err-E<gt>isa(I<CLASS>)> to be
+caught and handled by evaluating I<BLOCK>.
+
+I<BLOCK> will be passed two arguments. The first will be the exception object
+being thrown, and the second is a reference to a scalar variable. If this
+variable is set by the C<catch> block, then on return from the C<catch> block,
+C<try> will continue processing as if the C<catch> block was never found. This
+can be used to propagate an exception to a later C<catch>, for example.
+
+Another way of propagating the error is to call C<$err-E<gt>throw> from within
+the C<catch> block.
+
+If the scalar referenced by the second argument is not set, and the error is not
+re-thrown, then the current C<try> block will return with the result from the C<catch>
+block.
+
+=item C<except I<BLOCK>>
+
+When C<try> is looking for a handler, if an C<except> clause is found, C<BLOCK> is
+evaluated. The return value from this block should be a C<HASH> reference or a list of
+key-value pairs, where the keys are class names and the values are C<CODE>
+references for the handler of errors of that type.
+
+This is useful for defining handlers on the fly.
+
+For example:
+
+  try {
+	somethingDangerous();
+  }
+
+  # Handle IO errors
+  catch Exception::IOError with {
+	<do something>
+  }
+
+  # Build a handler for other errors
+  except {
+	my $handler = sub { print STDERR shift()->message };
+
+	return {
+		Exception::Custom1	=> $handler,
+		Exception::Custom2	=> $handler,
+	};
+  };
+
+=item C<otherwise I<BLOCK>>
+
+Catch any error by executing the code in I<BLOCK>
+
+When evaluated, I<BLOCK> will be passed one argument, which will be the error
+being processed.
+
+Only one C<otherwise> block may be specified per C<try> block. Additional C<otherwise>
+blocks will be ignored.
+
+=item C<finally I<BLOCK>>
+
+The code in I<BLOCK> will be executed after all other clauses have executed. If
+the C<try> block throws an exception then C<BLOCK> will be executed after any
+handlers have been executed. If a handler throws an exception, then the exception will
+be caught, the C<finally> block will be executed and the exception will be re-thrown.
+
+Only one C<finally> block may be specified per C<try> block. Additional ones will
+result in a syntax error.
+
+=head2 The Base Exception Class
+
+The following methods are methods on the base exception class, from which all
+exceptions classes defined herein inherit.
+
+=head3 Constructor Methods
+
+=over 4
+
+=item I<new( [@errorMessage] )>
+
+Returns a new Text::Templar::Exception object with the error message
+specified, or 'Unspecified error' if none is specified.
+
+=back
+
+=head3 Methods
+
+=over 4
+
+=item I<as_string( undef )>
+
+A wrapper for stringify()
+
+=item I<catch( $packageName, \&handlerCode[, \%clauses] )>
+
+Adds a catch clause with the specified handler code for the specified
+package onto the array of 'catch' clauses in the clauses given. If the
+clauses hashref is omitted, one is created. Returns the new or given clauses
+hashref with the new catch clause added.
+
+=item I<stackframe( $frameNumber )>
+
+Returns the stack frame from frameNumber levels deep in the call stack. The
+frame is a hash (or hashref if called in scalar context) of the form:
+
+  {
+    'package'       => The caller's package
+    'filename'      => The filename of the code being executed
+    'line'          => The line number being executed
+    'subroutine'    => The name of the function or method being executed
+    'hasargs'       => True if the sub was passed arguments from its caller
+    'wantarray'     => True if the sub was called in a list context
+    'evaltext'      => If 'subroutine' is '(eval)', this is the EXPR of the eval block
+    'is_require'    => True if the frame was created from a 'require' or 'use'
+  }
+
+=item I<stacktrace()>
+
+Returns an array of stack frames of the format returned by C<stackframe()> that
+describe the stack trace at the moment the exception was thrown.
+
+=item I<stringify()>
+
+Returns the stacktrace and error message of the exception as a human-readable
+string.
+
+=item I<throw( $errmsg )>
+
+Create a new C<Exception> object with I<errmsg> and C<die> with it. This will be
+caught by any enclosing C<try()> blocks. If not enclosed by aC<try()>, calling
+this method will cause a fatal exception.  This method is a modified version of
+the synonymous one in Error.pm.
+
+=back
+
+=head2 Autoloaded Methods
+
+=over 4
+
+=item I<message()>
+
+Get/set the error message.
+
+=item I<type()>
+
+Get/set the error type.
+
+=back
+
+=head2 Available Exception Classes
+
+=over 4
+
+=item Text::Templar::Exception::MethodError
+
+Method invocation error. Used when a method is invoked as a function, or
+vice-versa.
+
+=item Text::Templar::Exception::FileIOError
+
+File Input/Output error.
+
+=item Text::Templar::Exception::EvalError
+
+Evaluation error. Used when evaluated code fails to evaluated successfully.
+
+=item Text::Templar::Exception::RecursionError
+
+Too deep recursion error.
+
+=item Text::Templar::Exception::TemplateError
+
+Generic internal template error.
+
+=item Text::Templar::Exception::ParamError
+
+Parameter error. Used when a method is called with missing or illegal
+parameters.
+
+If this exception is thrown with two arguments, and the first argument is a
+integer number, an error message is built of the form: "Missing or undefined
+argument C<$_[0]>: C<$_[1]>".
+
+=head1 TODO
+
+=over 4
+
+=item *
+
+Make it possible to turn off stacktraces for speed with the C<$Exception::TERSE> flag.
+
+=back
+
 =head1 RCSID
 
-$Id: Exceptions.pm,v 1.3 2001/09/24 23:12:12 deveiant Exp $
+$Id: Exceptions.pm,v 1.6 2001/12/31 21:30:17 deveiant Exp $
 
 =head1 AUTHOR
 
@@ -96,8 +323,8 @@ BEGIN {
 
 	### Package constants
 	use vars		qw{$VERSION $RCSID @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $AUTOLOAD};
-	$VERSION = do { my @r = (q$Revision: 1.3 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-	$RCSID			= q$Id: Exceptions.pm,v 1.3 2001/09/24 23:12:12 deveiant Exp $;
+	$VERSION = do { my @r = (q$Revision: 1.6 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+	$RCSID			= q$Id: Exceptions.pm,v 1.6 2001/12/31 21:30:17 deveiant Exp $;
 
 	### Superclass
 	use base		qw{Exporter};
@@ -135,7 +362,7 @@ $Debug		= 0;
 
 ### (CONSTRUCTOR) METHOD: new( [@errorMessage] )
 ### Returns a new Text::Templar::Exception object with the error message
-###		specified, or 'Unspecified error' if none is specified.
+### specified, or 'Unspecified error' if none is specified.
 sub new {
 	my $proto = shift;
 	my $class = ref $proto || $proto;
@@ -203,7 +430,7 @@ sub new {
 ### METHOD: throw( $errmsg )
 ### Create a new C<Exception> object with I<errmsg> and C<die> with it. This
 ###		will be caught by any enclosing C<try()> blocks. If not enclosed by a
-###		C<try()>, calling this method will cause a fatal exception.
+### C<try()>, calling this method will cause a fatal exception.
 ### This method is a modified version of the synonymous one in Error.pm.
 sub throw {
 	my $self = shift;
@@ -249,7 +476,7 @@ sub AUTOLOAD {
 
 ### METHOD: stackframe( $frameNumber )
 ### Returns the stack frame from frameNumber levels deep in the call stack. The
-###		frame is a hash (or hashref if called in scalar context) of the form:
+### frame is a hash (or hashref if called in scalar context) of the form:
 ###
 ###	    'package'       => The caller's package
 ###	    'filename'      => The filename of the code being executed
@@ -273,7 +500,7 @@ sub stackframe {
 
 ### METHOD: stacktrace()
 ### Returns an array of stack frames of the format returned by C<stackframe()>
-###		that describe the stack trace at the moment the exception was thrown.
+### that describe the stack trace at the moment the exception was thrown.
 sub stacktrace {
 	my $self = shift;
 	return @{$self->{'stacktrace'}};
@@ -285,8 +512,8 @@ sub stacktrace {
 sub as_string { stringify(@_) }
 
 
-###	METHOD: stringify()
-###	Returns the stacktrace and error message or the exception as a human-readable string.
+### METHOD: stringify()
+### Returns the stacktrace and error message or the exception as a human-readable string.
 sub stringify {
 	my $self = shift;
 	my $rval;
@@ -317,16 +544,16 @@ sub stringify {
 ###############################################################################
 
 ### Note: Most of this code is from Error.pm by Graham Barr <gbarr@ti.com>, with
-###		a few aesthetic and functional modifications for the FaerieMUD system by
-###		Michael Granger <ged@FaerieMUD.org>. All comments are also mine, so
-###		blame me for any mistakes =:)
+### a few aesthetic and functional modifications for the FaerieMUD system by
+### Michael Granger <ged@FaerieMUD.org>. All comments are also mine, so
+### blame me for any mistakes =:)
 
 ### FUNCTION: try( \&codeblock, \%handlerClauses )
 ### The I<codeblock> will be evaluated and if no error condition arises, this
-###		function returns the result. I<handlerClauses> is a hash of code
-###		references that describe what actions to take if a error occurs. It is
-###		typically built by appending one or more X<catch>, X<otherwise>, or
-###		X<finally> clauses.
+### function returns the result. I<handlerClauses> is a hash of code
+### references that describe what actions to take if a error occurs. It is
+### typically built by appending one or more X<catch>, X<otherwise>, or
+### X<finally> clauses.
 sub try (&;$) {
 	my $try			= shift;				# The try block as a CODE ref
 	my $clauses		= @_ ? shift : {};		# The handler clauses
@@ -474,9 +701,9 @@ sub try (&;$) {
 
 ### METHOD: catch( $packageName, \&handlerCode[, \%clauses] )
 ### Adds a catch clause with the specified handler code for the specified
-###		package onto the array of 'catch' clauses in the clauses given. If the
-###		clauses hashref is omitted, one is created. Returns the new or given
-###		clauses hashref with the new catch clause added.
+### package onto the array of 'catch' clauses in the clauses given. If the
+### clauses hashref is omitted, one is created. Returns the new or given clauses
+### hashref with the new catch clause added.
 sub catch {
 	my $pkg		= shift;
 	my $code	= shift;
@@ -500,7 +727,7 @@ sub finally (&) {
 }
 
 ###	The except clause is a block which returns a hashref or a list of
-###		key-value pairs, where the keys are the classes and the values are subs.
+### key-value pairs, where the keys are the classes and the values are subs.
 sub except (&;$) {
 	my $code	= shift;
 	my $clauses	= shift || {};
@@ -524,8 +751,8 @@ sub except (&;$) {
 		return @$handlers;
 	};
 
-	###	Stick the handler onto the front of the listref with an undef as the package
-	###		to alert the try function that this is an except block
+	### Stick the handler onto the front of the listref with an undef as the package
+	### to alert the try function that this is an except block
 	unshift @{$clauses->{catch}}, undef, $code;
 
 	###	Pass the clauses on
@@ -589,9 +816,7 @@ our $ErrorType = 'parameter';
 sub new {
 	my $proto = shift;
 
-	my (
-		$errmsg,				# The error message
-	   );
+	my $errmsg;
 
 	### Two-arg syntax when the first arg's a number indicates a missing or
 	### undefined parameter.
@@ -603,6 +828,15 @@ sub new {
 						   ucfirst $paramName );
 	}
 
+	### Three-arg syntax indicates an illegal param
+	elsif ( @_ == 3 && ref $_[1] eq 'ARRAY' ) {
+		my ( $paramName, $legalValues, $actualValue ) = @_;
+		$errmsg = sprintf( q{Illegal '%s' parameter: Expected one of %s, got a %s},
+						   $paramName,
+						   join(', ', @$legalValues),
+						   (ref $actualValue ? ref $actualValue : "simple scalar") );
+	}
+
 	else {
 		$errmsg = @_ ? join( '', @_ ) : 'Illegal parameter';
 		$errmsg = ucfirst $errmsg;
@@ -611,10 +845,10 @@ sub new {
 	return $proto->SUPER::new( $errmsg );
 }
 
-
 ### Module require return value
 1;
 
+__END__
 
 
 

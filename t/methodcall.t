@@ -30,13 +30,13 @@ my $t = new Text::Templar
 	includePath => [ './t/templates' ]
 	or print( "1..0\n" ), exit 0;
 
-my $numTests = 5;
+my $numTests = 6;
 my $numTest = 0;
 
 print "1..$numTests\n";
 
 
-###	1: Load template
+### 1: Load template
 Test(
 	 try {
 		 $t->load("methodcalltest.tmpl")
@@ -47,13 +47,19 @@ Test(
 	 }
 );
 
-Test( $t->test1($obj1) );
+### 2: Methodcall
+Test( $t->test2($obj1) );
 
-Test( $t->test2($obj2) );
+### 3: Methodcall with format
+Test( $t->test3($obj2) );
 
+### 4: Hash lookup
 my $objectHash = { one => $obj1, two => $obj2 };
+Test( $t->test4($objectHash) );
 
-Test( $t->test3($objectHash) );
+### 5: Array lookup
+my $arrayRef = [ "first", "second" ];
+Test( $t->test5($arrayRef) );
 
 #print STDERR $t->render;
 
@@ -67,9 +73,13 @@ sub Test {
 
 sub test4results {
 	return <<"EOF";
-Test 1: object 1
-Test 2: object 2
+Test 2: object 1
+Test 3: object 2
 
-Test 3: object 1
+Test 4: object 1
+
+Test 5: first
+Test 5: second
+
 EOF
 }

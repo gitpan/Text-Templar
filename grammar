@@ -1,7 +1,7 @@
 # -*- makefile -*-
 #
 #	grammar for Text::Templar::Parser
-#	$Id: grammar,v 2.16 2001/09/24 23:11:29 deveiant Exp $
+#	$Id: grammar,v 2.18 2001/12/31 20:53:43 deveiant Exp $
 #
 #  This is a Parse::RecDescent grammar for the Text::Templar::Parser module,
 #  which is part of the Text::Templar module. The code for Parser.pm is
@@ -24,7 +24,7 @@
 #  (POD is in Parser.pod)
 #
 #	For Makefile.PL:
-#	( $VERSION ) = '$Revision: 2.16 $ ' =~ m{\$Revision:\s+(\S+)}; }
+#	( $VERSION ) = '$Revision: 2.18 $ ' =~ m{\$Revision:\s+(\S+)}; }
 #
 
 ###############################################################################
@@ -33,9 +33,8 @@
 
 parse:			chunk(s) eofile { $return = $item[1] }
 
-chunk:			<rulevar: $sourceName = $thisparser->{local}{source}>
 chunk:			<skip: ''> ( literal | node )
-				| <error: Failed parse of '$sourceName'>
+				| <error: Failed parse!>
 
 literal:		m{(?:[^<]|<(?!%)){1,16380}}s
 					{ bless \$item[1], "Text::Templar::$item[0]" }
@@ -165,7 +164,9 @@ INHERIT_tag:	name									{ \%item }
 
 
 ### Container tags
-FOREACH_tag:	name in(?) deref object methodchain					{ \%item }
+FOREACH_tag:	pair name in(?) object methodchain					{ \%item }
+				| pair name in(?) object							{ \%item }
+				| name in(?) deref object methodchain				{ \%item }
 				| name in(?) deref object							{ \%item }
 				| name in(?) object methodchain						{ \%item }
 				| name in(?) object									{ \%item }
@@ -220,13 +221,15 @@ empty:			m{\s*}
 
 object:			name
 
+pair:			m{\bpair\b}i
+
 in:				m{\bin\b}i
 
 deref:			m{\bderef\b}i
 
 with:			m{\bwith\b}i
 
-name:			m{[a-zA-Z]\w+}
+name:			m{\w+}
 
 integer:		m{\d+}
 

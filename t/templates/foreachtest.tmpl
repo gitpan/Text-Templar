@@ -46,3 +46,35 @@ Deref methodchain start:
 <% END FOREACH %>
 ----------------------------------------------------------------------
 Deref methodchain end.
+
+Hash iterator (hash) start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testHashIter %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Hash iterator (hash) end.
+
+Hash iterator (hashref) start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testHashrefIter %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Hash iterator (hashref) end.
+
+Hash iterator (hash) from methodChain start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testHashIterObject hash %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Hash iterator (hash) from methodChain end.
+
+Hash iterator (hashref) from methodChain start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testHashrefIterObject hashref %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Hash iterator (hashref) from methodChain end.

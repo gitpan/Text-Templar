@@ -18,6 +18,17 @@ sub testArrayMethod {
 	return ['one', $self->{value}, 'three'];
 }
 
+
+package hashTestObject;
+sub new {
+	my ( $class, $hash ) = @_;
+	return bless { hash => $hash }, $class;
+}
+
+sub hashref { shift()->{hash} }
+sub hash { %{shift()->{hash}} }
+
+
 package foreachTest;
 BEGIN {
 	use Text::Templar	qw{};
@@ -30,7 +41,7 @@ my $t = new Text::Templar
 	includePath => [ './t/templates' ]
 	or print( "1..0\n" ), exit 0;
 
-my $numTests = 7;
+my $numTests = 11;
 my $numTest = 0;
 
 print "1..$numTests\n";
@@ -47,6 +58,8 @@ Test(
 );
 
 my @testList = (qw{one two three four});
+my %testHash = (one => 1, two => 2, three => 3, four => 4);
+my $hashTestObj = new hashTestObject \%testHash;
 
 ### 2: Add plain foreach content
 Test( $t->testList(@testList) );
@@ -68,10 +81,23 @@ Test( $t->derefList(\@testList) );
 ### 6: Add deref methodchain
 Test( $t->testDerefObject( @testMethodList ) );
 
+### 7: Add hash iterator
+Test( $t->testHashIter( %testHash ) );
+
+### 8: Add hashref iterator
+Test( $t->testHashrefIter( \%testHash ) );
+
+### 9: Add hash object
+Test( $t->testHashIterObject( $hashTestObj ) );
+
+### 10: Add hashref object
+Test( $t->testHashrefIterObject( $hashTestObj ) );
+
 #print STDERR $t->render;
 
-### 7: Render
+### 11: Render
 Test( $t->render eq renderResults() );
+
 
 
 
@@ -118,10 +144,6 @@ Syntactic sugar end.
 
 Method list start:
 ----------------------------------------------------------------------
-	>>> testValue #0
-	>>> testValue #1
-	>>> testValue #2
-	>>> testValue #3
 	>>> testValue #4
 ----------------------------------------------------------------------
 Method list end.
@@ -154,5 +176,41 @@ Deref methodchain start:
 	>>> three
 ----------------------------------------------------------------------
 Deref methodchain end.
+
+Hash iterator (hash) start:
+----------------------------------------------------------------------
+    >>> one => 1
+    >>> three => 3
+    >>> two => 2
+    >>> four => 4
+----------------------------------------------------------------------
+Hash iterator (hash) end.
+
+Hash iterator (hashref) start:
+----------------------------------------------------------------------
+    >>> one => 1
+    >>> three => 3
+    >>> two => 2
+    >>> four => 4
+----------------------------------------------------------------------
+Hash iterator (hashref) end.
+
+Hash iterator (hash) from methodChain start:
+----------------------------------------------------------------------
+    >>> one => 1
+    >>> three => 3
+    >>> two => 2
+    >>> four => 4
+----------------------------------------------------------------------
+Hash iterator (hash) from methodChain end.
+
+Hash iterator (hashref) from methodChain start:
+----------------------------------------------------------------------
+    >>> one => 1
+    >>> three => 3
+    >>> two => 2
+    >>> four => 4
+----------------------------------------------------------------------
+Hash iterator (hashref) from methodChain end.
 EOF
 }

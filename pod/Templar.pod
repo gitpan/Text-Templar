@@ -2,7 +2,7 @@
 ################################################################################
 #
 #  Templar.pod - POD documentation for the Text::Templar class
-#  $Id: Templar.pod,v 1.10 2001/09/24 23:12:41 deveiant Exp $
+#  $Id: Templar.pod,v 1.11 2001/12/31 21:02:57 deveiant Exp $
 #
 #  Authors: Michael Granger <ged@FaerieMUD.org>
 #  and Dave McCorkhill <scotus@FaerieMUD.org>
@@ -215,8 +215,8 @@ would call the 'customer' method on whatever object it was applied to. If the
 to retrieve the customer's name from the C<customer> object. Note that you
 needn't use parenthesis if you are not passing arguments. If the customer class
 defines a C<phoneNumbers> method which returns a reference to a hash of
-telephone numbers, you could look up the customer's home phone number with the
-following syntax:
+telephone numbers, you could look up phone number associated with the 'work' key
+with the following syntax:
 
   customer->phoneNumbers->work
 
@@ -224,7 +224,7 @@ You could also use 'C<.>' as method call separators to do it like this:
 
   customer.phoneNumbers.work
 
-Similarly, you can lookup a single element from an arrayref by adding its index
+Similarly, you can look up a single element from an arrayref by adding its index
 to the methodchain:
 
   customer.orders.5.orderNumber
@@ -601,7 +601,7 @@ list template details which do not belong in the regular template attributes.
 B<Examples:>
 
   <% META template-author 'Michael Granger' %>
-  <% META rscid q$Id: Templar.pod,v 1.10 2001/09/24 23:12:41 deveiant Exp $>
+  <% META rscid q$Id: Templar.pod,v 1.11 2001/12/31 21:02:57 deveiant Exp $>
 
 =item B<INHERIT directive>
 
@@ -654,6 +654,8 @@ either a '/' or an 'END ' prepended to the directive name.
 	<% FOREACH <iterator> [IN] <name> %>
 	<% FOREACH <iterator> [IN] DEREF <name> <methodchain> %>
 	<% FOREACH <iterator> [IN] DEREF <name> %>
+	<% FOREACH PAIR <iterator> [IN] <name> <methodchain> %>
+	<% FOREACH PAIR <iterator> [IN] <name> %>
 	<% FOREACH <name> %>
 
 The C<FOREACH> directive is an iterator directive for inserting a
@@ -672,6 +674,11 @@ The third and fourth forms do the same thing as the first and second form, but
 cause the C<name>d data to be dereferenced first. This is sometimes useful with
 nested FOREACH directives, where the outer loop may be iterating over an array
 of arrayrefs, for example.
+
+The fifth and sixth form are hash iterators. They expect a hash or hashref as
+the value of C<name>, or as the return value of the specified C<methodchain>
+called on the C<name>d object. It iterates over each key/value pair, setting
+C<iterator> to a hashref with C<key> and C<value> pairs.
 
 The fifth form iterates over the C<name>d list, using the C<name> as the
 iterator inside each loop.
@@ -749,7 +756,17 @@ look like:
 	<P><A href="http://www.google.com/">http://www.google.com/</A></P>
 	<P><A href="http://slashdot.org/">http://slashdot.org/</A></P>
 	<P><A href="http://www.linux.com/">http://www.linux.com/</A></P>
-	<P><A href="<% METHOD link %>"><% METHOD link %></A></P>
+
+An example of hash iteration:
+
+  <SELECT name="team">
+  <% FOREACH PAIR team IN teams %>
+  <% IF team value %>
+    <OPTION value="<% METHODCALL team key %>" selected><% METHODCALL team key %></OPTION>
+  <% ELSE %>
+    <OPTION value="<% METHODCALL team key %>"><% METHODCALL team key %></OPTION>
+  <% END IF %>
+  </SELECT>
 
 =item B<JOIN directive>
 
@@ -890,7 +907,7 @@ B<Examples:>
 In the template:
 
   <% COMMENT %>
-    Template RCSID: $Id: Templar.pod,v 1.10 2001/09/24 23:12:41 deveiant Exp $
+    Template RCSID: $Id: Templar.pod,v 1.11 2001/12/31 21:02:57 deveiant Exp $
   <% /COMMENT %>
 
   <P>Something</P>
