@@ -40,11 +40,11 @@ versions of synonymous sections of that module are annotated accordingly.
 
 =head1 RCSID
 
-$Id: Exceptions.pm,v 1.2 2001/05/28 20:06:35 deveiant Exp $
+$Id: Exceptions.pm,v 1.3 2001/09/24 23:12:12 deveiant Exp $
 
 =head1 AUTHOR
 
-Michael Granger E<gt>ged@FaerieMUD.orgE<lt>
+Michael Granger E<lt>ged@FaerieMUD.orgE<gt>
 
 Copyright (c) 1999-2001 The FaerieMUD Consortium. All rights reserved.
 
@@ -96,8 +96,8 @@ BEGIN {
 
 	### Package constants
 	use vars		qw{$VERSION $RCSID @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $AUTOLOAD};
-	$VERSION = do { my @r = (q$Revision: 1.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-	$RCSID			= q$Id: Exceptions.pm,v 1.2 2001/05/28 20:06:35 deveiant Exp $;
+	$VERSION = do { my @r = (q$Revision: 1.3 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+	$RCSID			= q$Id: Exceptions.pm,v 1.3 2001/09/24 23:12:12 deveiant Exp $;
 
 	### Superclass
 	use base		qw{Exporter};

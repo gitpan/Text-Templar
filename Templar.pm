@@ -2,7 +2,7 @@
 ################################################################################
 #
 #  Text::Templar
-#  $Id: Templar.pm,v 2.33 2001/06/20 03:48:04 deveiant Exp $
+#  $Id: Templar.pm,v 2.35 2001/09/24 23:13:16 deveiant Exp $
 #
 #  Authors: Michael Granger <ged@FaerieMUD.org>
 #  and Dave McCorkhill <scotus@FaerieMUD.org>
@@ -34,8 +34,8 @@ BEGIN {
 
 	###	Package globals
 	use vars	qw{$VERSION $RCSID $AUTOLOAD};
-    $VERSION	= do { my @r = (q$Revision: 2.33 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-	$RCSID		= q$Id: Templar.pm,v 2.33 2001/06/20 03:48:04 deveiant Exp $;
+    $VERSION	= do { my @r = (q$Revision: 2.35 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+	$RCSID		= q$Id: Templar.pm,v 2.35 2001/09/24 23:13:16 deveiant Exp $;
 
 	### Prototypes for overridden methods (These don't work now for some strange
 	### reason I haven't yet figured out.)
@@ -172,7 +172,7 @@ BEGIN {
 ### Remove and return the last element of the syntax tree. (Translucent method)
 
 
-###	METHOD: shiftSyntaxTree( @nodes=Text::Templar::node )
+###	METHOD: shiftSyntaxTree( undef )
 ### Remove and return the first element of the syntax tree. (Translucent method)
 
 
@@ -208,7 +208,7 @@ BEGIN {
 ### Remove and return the last element of the include path. (Translucent method)
 
 
-###	METHOD: shiftIncludePath( @directories )
+###	METHOD: shiftIncludePath( undef )
 ### Remove and return the first element of the template include
 ###		path. (Translucent method)
 
@@ -245,7 +245,7 @@ BEGIN {
 ### Remove and return the last element of the query list. (Translucent method)
 
 
-###	METHOD: shiftQueries( @nodes=Text::Templar::QUERY )
+###	METHOD: shiftQueries( undef )
 ### Remove and return the first element of the query list. (Translucent method)
 
 
@@ -319,7 +319,7 @@ BEGIN {
 ###		list. (Translucent method)
 
 
-###	(PROTECTED) METHOD: _shiftTailedErrors( @exceptions=Text::Templar::Exception )
+###	(PROTECTED) METHOD: _shiftTailedErrors( undef )
 ### Remove and return the first element of the tailed exception list.
 ###		(Translucent method)
 
@@ -1546,7 +1546,6 @@ sub renderIF {
 		$haveSeenPositiveCondition,
 		@keptNodes,
 		@filteredNodes,
-		$object,
 	   );
 
 	@keptNodes = ();

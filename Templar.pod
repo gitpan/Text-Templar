@@ -2,7 +2,7 @@
 ################################################################################
 #
 #  Templar.pod - POD documentation for the Text::Templar class
-#  $Id: Templar.pod,v 1.8 2001/05/28 20:12:15 deveiant Exp $
+#  $Id: Templar.pod,v 1.10 2001/09/24 23:12:41 deveiant Exp $
 #
 #  Authors: Michael Granger <ged@FaerieMUD.org>
 #  and Dave McCorkhill <scotus@FaerieMUD.org>
@@ -56,9 +56,9 @@ Text::Templar - a document-generation object class
 
 =head1 REQUIRES
 
-C<Perl 5.6>, C<Class::Translucent>, C<IO::File>, C<IO::Handle>,
-C<Scalar::Util>, C<Data::Dumper>, C<Text::Templar::Parser>,
-C<Text::Templar::Exceptions>
+C<Perl 5.6>, L<Class::Translucent>, L<IO::File>, L<IO::Handle>,
+L<Scalar::Util>, L<Data::Dumper>, L<Text::Templar::Parser>,
+L<Text::Templar::Exceptions>
 
 =head1 EXPORTS
 
@@ -247,10 +247,10 @@ A valid Perl variable name, with prepended type-indicator. Examples:
 
 =item B<path>
 
-An absolute or relative Unix pathname. If the path has spaces or other unusual
-characters, it must be quoted with any valid Perl quoting mechanism. Eg.,
+An absolute or relative Unix pathname. It must be quoted with any valid Perl
+quoting mechanism. Eg.,
 
-  /www/templates/main.tmpl
+  q{/www/templates/main.tmpl}
 
   "/mnt/docs/My Documents/something"
 
@@ -601,7 +601,7 @@ list template details which do not belong in the regular template attributes.
 B<Examples:>
 
   <% META template-author 'Michael Granger' %>
-  <% META rscid q$Id: Templar.pod,v 1.8 2001/05/28 20:12:15 deveiant Exp $>
+  <% META rscid q$Id: Templar.pod,v 1.10 2001/09/24 23:12:41 deveiant Exp $>
 
 =item B<INHERIT directive>
 
@@ -890,7 +890,7 @@ B<Examples:>
 In the template:
 
   <% COMMENT %>
-    Template RCSID: $Id: Templar.pod,v 1.8 2001/05/28 20:12:15 deveiant Exp $
+    Template RCSID: $Id: Templar.pod,v 1.10 2001/09/24 23:12:41 deveiant Exp $
   <% /COMMENT %>
 
   <P>Something</P>
