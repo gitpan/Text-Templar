@@ -1,7 +1,7 @@
 # -*- makefile -*-
 #
 #	grammar for Text::Templar::Parser
-#	$Id: grammar,v 2.14 2001/05/28 20:06:42 deveiant Exp $
+#	$Id: grammar,v 2.15 2001/06/20 03:49:09 deveiant Exp $
 #
 #  This is a Parse::RecDescent grammar for the Text::Templar::Parser module,
 #  which is part of the Text::Templar module. The code for Parser.pm is
@@ -24,7 +24,7 @@
 #  (POD is in Parser.pod)
 #
 #	For Makefile.PL:
-#	( $VERSION ) = '$Revision: 2.14 $ ' =~ m{\$Revision:\s+(\S+)}; }
+#	( $VERSION ) = '$Revision: 2.15 $ ' =~ m{\$Revision:\s+(\S+)}; }
 #
 
 ###############################################################################
@@ -244,8 +244,8 @@ format:			quotedValue
 
 question:		quotedValue
 
-path:			m{^\s*[^\s]+}
-				| quotedValue
+path:			quotedValue
+				| m{^\s*[^\s]+}
 				| <error>
 
 quotedValue:	<perl_quotelike>				{ $item[1]->[2] }

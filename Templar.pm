@@ -2,7 +2,7 @@
 ################################################################################
 #
 #  Text::Templar
-#  $Id: Templar.pm,v 2.32 2001/05/28 20:05:21 deveiant Exp $
+#  $Id: Templar.pm,v 2.33 2001/06/20 03:48:04 deveiant Exp $
 #
 #  Authors: Michael Granger <ged@FaerieMUD.org>
 #  and Dave McCorkhill <scotus@FaerieMUD.org>
@@ -34,8 +34,8 @@ BEGIN {
 
 	###	Package globals
 	use vars	qw{$VERSION $RCSID $AUTOLOAD};
-    $VERSION	= do { my @r = (q$Revision: 2.32 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-	$RCSID		= q$Id: Templar.pm,v 2.32 2001/05/28 20:05:21 deveiant Exp $;
+    $VERSION	= do { my @r = (q$Revision: 2.33 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+	$RCSID		= q$Id: Templar.pm,v 2.33 2001/06/20 03:48:04 deveiant Exp $;
 
 	### Prototypes for overridden methods (These don't work now for some strange
 	### reason I haven't yet figured out.)
@@ -2159,17 +2159,26 @@ sub _findFile {
 		@pathsToCheck,			# The array of directories to check for the file
 	   );
 
-	# Figure out which kind of includepath it is, and make a path array
-	$includePath = $self->includePath;
-	throw Text::Templar::Exception::TemplateError
-		"Failed to open file '$filename': Invalid include path '$includePath'."
-			unless ref $includePath eq 'ARRAY' || not ref $includePath;
-	@pathsToCheck = ref $includePath
-		? @{$includePath}
-		: split m{[:;]}, $includePath;
+	### If they passed an absolute path, test for readability.
+	if ( $filename =~ m{^/} ) {
 
-	### If the filename isn't an absolute path, try to figure out what the absolute path is
-	if ( $filename !~ m{^/} && @pathsToCheck ) {
+		# Test the path
+		throw Text::Templar::Exception "Could not find '$filename' (absolute path)"
+			unless -r $filename;
+		$path = $filename;
+	}
+
+	### Otherwise, figure out which kind of includepath we've got, and make a
+	### path array. Look for the file at the end of each path.
+	else {
+		$includePath = $self->includePath;
+		throw Text::Templar::Exception::TemplateError
+			"Failed to open file '$filename': Invalid include path '$includePath'."
+				unless ref $includePath eq 'ARRAY' || not ref $includePath;
+
+		@pathsToCheck = ref $includePath
+			? @{$includePath}
+			: split m{[:;]}, $includePath;
 
 		# Check each path for the file
 		foreach my $pathToCheck ( @pathsToCheck ) {
@@ -2178,14 +2187,12 @@ sub _findFile {
 			$path = "$pathToCheck/$filename", last
 				if -r "$pathToCheck/$filename";
 		}
-	} else {
 
-		# Test the path
-		$path = $filename if -r "$filename";
+		throw Text::Templar::Exception "Could not find '$filename' in include path (",
+			join(':', @pathsToCheck), ")"
+				unless defined $path && $path ne '';
 	}
 
-	throw Text::Templar::Exception "Could not find '$filename' in include path (", join(':', @pathsToCheck), ")"
-		unless defined $path && $path ne '';
 
 	return $path;
 }
