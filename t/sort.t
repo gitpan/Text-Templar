@@ -14,6 +14,7 @@ sub values {
 
 package sortTest;
 BEGIN {
+	$| = 1;
 	use Text::Templar	qw{};
 	use Text::Templar::Exceptions		qw{:syntax};
 }

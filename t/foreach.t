@@ -18,6 +18,8 @@ sub testArrayRefMethod {
 	return ['one', $self->{value}, 'three'];
 }
 
+sub value { $_[0]->{value} }
+
 
 package hashTestObject;
 sub new {
@@ -31,6 +33,7 @@ sub hash { %{shift()->{hash}} }
 
 package foreachTest;
 BEGIN {
+	$| = 1;
 	use Text::Templar	qw{};
 	use Text::Templar::Exceptions		qw{:syntax};
 }
@@ -41,7 +44,7 @@ my $t = new Text::Templar
 	includePath => [ './t/templates' ]
 	or print( "1..0\n" ), exit 0;
 
-my $numTests = 23;
+my $numTests = 24;
 my $numTest = 0;
 
 print "1..$numTests\n";
@@ -67,19 +70,19 @@ Test( $t->testList(@testList) );
 ### 3: Add syntactic sugar foreach content
 Test( $t->testSugarList(@testList) );
 
-my @testMethodList = ();
+my @testObjects = ();
 for my $num ( 0 .. 4 ) {
-	push @testMethodList, new testObject "testValue #$num";
+	push @testObjects, new testObject "testValue #$num";
 }
 
 ### 4: Add an object to test the methodchain iterator
-Test( $t->testMethodChain($testMethodList[2]) );
+Test( $t->testMethodChain($testObjects[2]) );
 
 ### 5: Add deref iterator
 Test( $t->derefList(\@testList) );
 
 ### 6: Add deref methodchain
-Test( $t->testDerefObject( @testMethodList ) );
+Test( $t->testDerefObject( @testObjects ) );
 
 ### 7: Add hash iterator
 Test( $t->testHashIter( %testHash ) );
@@ -129,9 +132,12 @@ Test( $t->testValueSortedHashrefIterObject( $hashTestObj ) );
 ### 22: Add custom-sorted hash iterator
 Test( $t->testCustomSortedHashrefIterObject( $hashTestObj ) );
 
+### 23: Test localized interator variable
+Test( $t->testLocalizedIterator(@testObjects) );
+
 #print STDERR $t->render;
 
-### 23: Render
+### 24: Render
 my $resultPattern = ResultPattern();
 Test( $t->render =~ $resultPattern );
 
@@ -151,7 +157,7 @@ sub ResultPattern {qr{List start:
 \s+>>> three
 \s+>>> four
 ----------------------------------------------------------------------
-List end.
+List end\.
 
 Syntactic sugar start:
 ----------------------------------------------------------------------
@@ -160,7 +166,7 @@ Syntactic sugar start:
 \s+>>> \[EVEN\] three
 \s+>>> \[ODD\] four
 ----------------------------------------------------------------------
-Syntactic sugar end.
+Syntactic sugar end\.
 
 Deref list start:
 ----------------------------------------------------------------------
@@ -169,7 +175,7 @@ Deref list start:
 \s+>>> three
 \s+>>> four
 ----------------------------------------------------------------------
-Deref list end.
+Deref list end\.
 
 Methodchain start:
 ----------------------------------------------------------------------
@@ -178,7 +184,7 @@ Methodchain start:
 \s+>>> testValue #2
 \s+>>> testValue #2
 ----------------------------------------------------------------------
-Methodchain end.
+Methodchain end\.
 
 Deref methodchain start:
 ----------------------------------------------------------------------
@@ -198,7 +204,7 @@ Deref methodchain start:
 \s+>>> testValue #4
 \s+>>> three
 ----------------------------------------------------------------------
-Deref methodchain end.
+Deref methodchain end\.
 
 Hash iterator \(hash\) start:
 ----------------------------------------------------------------------
@@ -207,7 +213,7 @@ Hash iterator \(hash\) start:
 \s+>>> (one|two|three|four) => [1-4]
 \s+>>> (one|two|three|four) => [1-4]
 ----------------------------------------------------------------------
-Hash iterator \(hash\) end.
+Hash iterator \(hash\) end\.
 
 Key-sorted hash iterator \(hash\) start:
 ----------------------------------------------------------------------
@@ -216,7 +222,7 @@ Key-sorted hash iterator \(hash\) start:
 \s+>>> three => 3
 \s+>>> two => 2
 ----------------------------------------------------------------------
-Key-sorted hash iterator \(hash\) end.
+Key-sorted hash iterator \(hash\) end\.
 
 Value-sorted hash iterator \(hash\) start:
 ----------------------------------------------------------------------
@@ -225,7 +231,7 @@ Value-sorted hash iterator \(hash\) start:
 \s+>>> three => 3
 \s+>>> four => 4
 ----------------------------------------------------------------------
-Value-sorted hash iterator \(hash\) end.
+Value-sorted hash iterator \(hash\) end\.
 
 Custom-sorted \(by second letter of key\) hash iterator \(hash\) start:
 ----------------------------------------------------------------------
@@ -234,7 +240,7 @@ Custom-sorted \(by second letter of key\) hash iterator \(hash\) start:
 \s+>>> four => 4
 \s+>>> two => 2
 ----------------------------------------------------------------------
-Custom-sorted iterator \(hash\) end.
+Custom-sorted iterator \(hash\) end\.
 
 Hash iterator \(hashref\) start:
 ----------------------------------------------------------------------
@@ -243,7 +249,7 @@ Hash iterator \(hashref\) start:
 \s+>>> (one|two|three|four) => [1-4]
 \s+>>> (one|two|three|four) => [1-4]
 ----------------------------------------------------------------------
-Hash iterator \(hashref\) end.
+Hash iterator \(hashref\) end\.
 
 Key-sorted hash iterator \(hashref\) start:
 ----------------------------------------------------------------------
@@ -252,7 +258,7 @@ Key-sorted hash iterator \(hashref\) start:
 \s+>>> three => 3
 \s+>>> two => 2
 ----------------------------------------------------------------------
-Key-sorted hash iterator \(hashref\) end.
+Key-sorted hash iterator \(hashref\) end\.
 
 Value-sorted hash iterator \(hashref\) start:
 ----------------------------------------------------------------------
@@ -261,7 +267,7 @@ Value-sorted hash iterator \(hashref\) start:
 \s+>>> three => 3
 \s+>>> four => 4
 ----------------------------------------------------------------------
-Value-sorted hash iterator \(hashref\) end.
+Value-sorted hash iterator \(hashref\) end\.
 
 Custom-sorted \(by reverse key\) hash iterator \(hashref\) start:
 ----------------------------------------------------------------------
@@ -270,7 +276,7 @@ Custom-sorted \(by reverse key\) hash iterator \(hashref\) start:
 \s+>>> two => 2
 \s+>>> four => 4
 ----------------------------------------------------------------------
-Custom-sorted hash iterator \(hashref\) end.
+Custom-sorted hash iterator \(hashref\) end\.
 
 Hash iterator \(hash\) from methodChain start:
 ----------------------------------------------------------------------
@@ -279,7 +285,7 @@ Hash iterator \(hash\) from methodChain start:
 \s+>>> (one|two|three|four) => [1-4]
 \s+>>> (one|two|three|four) => [1-4]
 ----------------------------------------------------------------------
-Hash iterator \(hash\) from methodChain end.
+Hash iterator \(hash\) from methodChain end\.
 
 Key-sorted hash iterator from methodChain start:
 ----------------------------------------------------------------------
@@ -288,7 +294,7 @@ Key-sorted hash iterator from methodChain start:
 \s+>>> three => 3
 \s+>>> two => 2
 ----------------------------------------------------------------------
-Key-sorted hash iterator from methodChain end.
+Key-sorted hash iterator from methodChain end\.
 
 Value-sorted hash iterator from methodChain start:
 ----------------------------------------------------------------------
@@ -297,7 +303,7 @@ Value-sorted hash iterator from methodChain start:
 \s+>>> three => 3
 \s+>>> four => 4
 ----------------------------------------------------------------------
-Value-sorted hash iterator from methodChain end.
+Value-sorted hash iterator from methodChain end\.
 
 Custom-sorted \(by-value\) hash iterator from methodChain start:
 ----------------------------------------------------------------------
@@ -306,7 +312,7 @@ Custom-sorted \(by-value\) hash iterator from methodChain start:
 \s+>>> three => 3
 \s+>>> four => 4
 ----------------------------------------------------------------------
-Custom-sorted hash iterator from methodChain end.
+Custom-sorted hash iterator from methodChain end\.
 
 Hash iterator \(hashref\) from methodChain start:
 ----------------------------------------------------------------------
@@ -315,7 +321,7 @@ Hash iterator \(hashref\) from methodChain start:
 \s+>>> (one|two|three|four) => [1-4]
 \s+>>> (one|two|three|four) => [1-4]
 ----------------------------------------------------------------------
-Hash iterator \(hashref\) from methodChain end.
+Hash iterator \(hashref\) from methodChain end\.
 
 Key-sorted hash iterator \(hashref\) from methodChain start:
 ----------------------------------------------------------------------
@@ -324,7 +330,7 @@ Key-sorted hash iterator \(hashref\) from methodChain start:
 \s+>>> three => 3
 \s+>>> two => 2
 ----------------------------------------------------------------------
-Key-sorted hash iterator \(hashref\) from methodChain end.
+Key-sorted hash iterator \(hashref\) from methodChain end\.
 
 Value-sorted hash iterator \(hashref\) from methodChain start:
 ----------------------------------------------------------------------
@@ -333,7 +339,7 @@ Value-sorted hash iterator \(hashref\) from methodChain start:
 \s+>>> three => 3
 \s+>>> four => 4
 ----------------------------------------------------------------------
-Value-sorted hash iterator \(hashref\) from methodChain end.
+Value-sorted hash iterator \(hashref\) from methodChain end\.
 
 Custom-sorted \(reverse by-value\) hash iterator \(hashref\) from methodChain start:
 ----------------------------------------------------------------------
@@ -342,5 +348,12 @@ Custom-sorted \(reverse by-value\) hash iterator \(hashref\) from methodChain st
 \s+>>> two => 2
 \s+>>> one => 1
 ----------------------------------------------------------------------
-Custom-sorted hash iterator \(hashref\) from methodChain end.}s
+Custom-sorted hash iterator \(hashref\) from methodChain end\.
+
+Iterator local variable bug test:
+----------------------------------------------------------------------
+\s+>>> testValue #2
+\s+>>> testValue #4
+----------------------------------------------------------------------
+Iterator local variable bug test end\.}s
 }

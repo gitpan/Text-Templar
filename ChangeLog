@@ -1,6 +1,107 @@
+2002-09-27 08:41  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.42, release_2_42):
+
+	- Added a fix for the localized iterator variable bug reported by Martin Chase
+	  <stillflame@FaerieMUD.org>.
+	
+2002-09-27 08:41  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/foreachtest.tmpl (2.9, release_2_42):
+
+	- Added test case for localized iterator variable bug reported by Martin Chase
+	  <stillflame@FaerieMUD.org>.
+	
+2002-09-27 08:40  Michael Granger <ged@FaerieMUD.org>
+
+	* t/foreach.t (2.12, release_2_42):
+
+	- Added test case for localized iterator variable bug uncovered by Martin Chase
+	  <stillflame@FaerieMUD.org>.
+	
+2002-08-29 12:31  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/jointest.tmpl (2.3, release_2_42):
+
+	- Added tests for new hash iterator forms
+	
+2002-08-29 12:30  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: trim.t (1.3), templates/trimtest.tmpl (1.2) (utags:
+	release_2_42):
+
+	- Fixed names to reflect name change
+	
+2002-08-29 12:29  Michael Granger <ged@FaerieMUD.org>
+
+	* t/join.t (2.4, release_2_42):
+
+	- Added testing code for new hash iterator forms
+	
+2002-08-29 12:20  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.20, release_2_42):
+
+	- Renamed the MAXLENGTH directive to 'TRIM' to more accurately represent what it
+	  does. 'MAXLENGTH' retained for backward-compatibility, but should be
+	  considered deprecated, and may be removed in a future version.
+	
+	- Caught the JOIN directive up with FOREACH's capabilities, including hash
+	  iteration, DEREF, and quoted arguments.
+	
+	- Disambiguated argument and quotedArgument productions.
+	
+2002-08-29 11:55  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.41):
+
+	- Changed method names to reflect changes in the
+	   MAXLENGTH/TRIM directive.
+	
+	- Factored iterated content out into a new method: _renderIteratedContent().
+	
+2002-08-29 11:51  Michael Granger <ged@FaerieMUD.org>
+
+	* misc/checkparser.pl (1.2, release_2_42):
+
+	- Added a new option '-e/--tree' which outputs the parsed syntax tree from the
+	  target file.
+	
+2002-08-29 11:49  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: cache.t (2.3, release_2_42), comment.t (2.4, release_2_42),
+	conditional.t (1.8, release_2_42), define.t (2.4, release_2_42),
+	delay.t (2.4, release_2_42), env.t (2.2, release_2_42),
+	erroroutput.t (2.2, release_2_42), eval.t (2.3, release_2_42),
+	foreach.t (2.11), grep.t (2.4, release_2_42), include.t (2.4,
+	release_2_42), inherit.t (1.3, release_2_42), map.t (2.4,
+	release_2_42), meta.t (2.3, release_2_42), method.t (2.2,
+	release_2_42), methodcall.t (2.4, release_2_42), query.t (2.2,
+	release_2_42), sort.t (2.4, release_2_42), stop.t (2.2,
+	release_2_42):
+
+	- Fixed buffering to make progress more granular.
+	
+2002-08-12 17:17  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: maxlength.t (1.3), templates/maxlengthtest.tmpl (1.2):
+
+	'Updated'
+	
+2002-08-08 16:44  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.14, release_2_42, release_2_40):
+
+	- Updated to reflect latest code
+	
+	- Hyperlinked lots of stuff
+	
+	- Updated structure to render cleaner under perl-5.8.0. This will,
+	  unfortunately, make it not render very well under previous versions.
+	
 2002-08-08 14:28  Michael Granger <ged@FaerieMUD.org>
 
-	* Makefile.PL (2.11):
+	* Makefile.PL (2.11, release_2_42, release_2_40):
 
 	Updated requirement for Class::Translucent to include bugfixed version
 	
@@ -12,7 +113,7 @@
 	
 2002-08-08 10:03  Michael Granger <ged@FaerieMUD.org>
 
-	* t/templates/foreachtest.tmpl (2.8):
+	* t/templates/foreachtest.tmpl (2.8, release_2_40):
 
 	- Removed deprecated (and useless) DELAYED directive.
 	
@@ -20,14 +121,16 @@
 	
 2002-08-08 10:02  Michael Granger <ged@FaerieMUD.org>
 
-	* t/: include.t (2.3), templates/include.incl (2.1),
-	templates/include2.incl (2.1), templates/includetest.tmpl (2.1):
+	* t/: include.t (2.3), templates/include.incl (2.1, release_2_42),
+	templates/include2.incl (2.1, release_2_42),
+	templates/includetest.tmpl (2.1, release_2_42) (utags:
+	release_2_40):
 
 	- Added tests for the template variable ($TEMPLATE_PATH, etc.) bugfix.
 	
 2002-08-08 10:01  Michael Granger <ged@FaerieMUD.org>
 
-	* t/foreach.t (2.10):
+	* t/foreach.t (2.10, release_2_40):
 
 	- Fixed stupid reliance on hash sort order exposed by Perl 5.8. Thanks to "Josts
 	  Smokehouse" <Jost.Krieger+smokeback@ruhr-uni-bochum.de> for the bug report.
@@ -36,19 +139,20 @@
 	
 2002-08-08 09:58  Michael Granger <ged@FaerieMUD.org>
 
-	* t/delay.t (2.3):
+	* t/delay.t (2.3, release_2_40):
 
 	- Added code to test deprecation warning.
 	
 2002-08-08 09:57  Michael Granger <ged@FaerieMUD.org>
 
-	* lib/Text/Templar/Exceptions.pm (1.8), pod/Templar.pod (1.13):
+	* lib/Text/Templar/Exceptions.pm (1.8, release_2_42, release_2_40),
+	pod/Templar.pod (1.13):
 
 	- Fixed 'v-string in use/require non-portable' warning with Perl 5.8
 	
 2002-08-08 09:55  Michael Granger <ged@FaerieMUD.org>
 
-	* lib/Text/Templar.pm (2.40):
+	* lib/Text/Templar.pm (2.40, release_2_40):
 
 	- Fixed 'v-string in use/require non-portable' warning with Perl 5.8
 	
@@ -78,7 +182,7 @@
 	
 2002-08-08 04:19  Michael Granger <ged@FaerieMUD.org>
 
-	* grammar (2.19):
+	* grammar (2.19, release_2_40):
 
 	- Added optional sorting syntax to 'FOREACH PAIR' hash iterator.
 	
@@ -87,7 +191,7 @@
 	
 2002-08-08 04:16  Michael Granger <ged@FaerieMUD.org>
 
-	* misc/checkparser.pl (1.1):
+	* misc/checkparser.pl (1.1, release_2_40):
 
 	Initial commit.
 	
@@ -127,13 +231,14 @@
 	
 2002-05-10 10:45  Michael Granger <ged@FaerieMUD.org>
 
-	* t/conditional.t (1.7):
+	* t/conditional.t (1.7, release_2_40):
 
 	Made comments actually reflect test numbers.
 	
 2002-05-10 10:44  Michael Granger <ged@FaerieMUD.org>
 
-	* t/: erroroutput.t (2.1), templates/erroroutput.tmpl (2.1):
+	* t/: erroroutput.t (2.1), templates/erroroutput.tmpl (2.1,
+	release_2_42) (utags: release_2_40):
 
 	Initial release
 	
@@ -228,8 +333,9 @@
 	
 2001-11-29 15:45  Michael Granger <ged@FaerieMUD.org>
 
-	* grammar (2.17), t/methodcall.t (2.3, r2_37),
-	t/templates/methodcalltest.tmpl (2.2, r2_37):
+	* grammar (2.17), t/methodcall.t (2.3, release_2_40, r2_37),
+	t/templates/methodcalltest.tmpl (2.2, release_2_42, release_2_40,
+	r2_37):
 
 	- Fixed array-index bug in METHODCALL (Thanks to Michael Wojcikiewicz
 	  <wojo@booyaka.com>)
@@ -298,7 +404,7 @@
 	
 2001-06-12 08:14  Michael Granger <ged@FaerieMUD.org>
 
-	* README (2.4, r2_37):
+	* README (2.4, release_2_42, release_2_40, r2_37):
 
 	- Touched up documentation in preparation for uploading to CPAN.
 	
@@ -316,13 +422,17 @@
 	
 2001-06-06 09:05  Michael Granger <ged@FaerieMUD.org>
 
-	* t/: cache.t (2.2, r2_37), comment.t (2.3, r2_37), conditional.t
-	(1.6, r2_37), define.t (2.3, r2_37), delay.t (2.2, r2_37), env.t
-	(2.1, r2_37), eval.t (2.2, r2_37), foreach.t (2.8), grep.t (2.3,
-	r2_37), include.t (2.2, r2_37), inherit.t (1.2, r2_37), join.t
-	(2.3, r2_37), map.t (2.3, r2_37), maxlength.t (1.2, r2_37), meta.t
-	(2.2, r2_37), method.t (2.1, r2_37), methodcall.t (2.2), query.t
-	(2.1, r2_37), sort.t (2.3, r2_37), stop.t (2.1, r2_37):
+	* t/: cache.t (2.2, release_2_40, r2_37), comment.t (2.3,
+	release_2_40, r2_37), conditional.t (1.6, r2_37), define.t (2.3,
+	release_2_40, r2_37), delay.t (2.2, r2_37), env.t (2.1,
+	release_2_40, r2_37), eval.t (2.2, release_2_40, r2_37), foreach.t
+	(2.8), grep.t (2.3, release_2_40, r2_37), include.t (2.2, r2_37),
+	inherit.t (1.2, release_2_40, r2_37), join.t (2.3, release_2_40,
+	r2_37), map.t (2.3, release_2_40, r2_37), maxlength.t (1.2,
+	release_2_40, r2_37), meta.t (2.2, release_2_40, r2_37), method.t
+	(2.1, release_2_40, r2_37), methodcall.t (2.2), query.t (2.1,
+	release_2_40, r2_37), sort.t (2.3, release_2_40, r2_37), stop.t
+	(2.1, release_2_40, r2_37), trim.t (1.2, release_2_40, r2_37):
 
 	- Removed another dependency on Exception.pm (thanks to Jeremiah Chase
 	  <phaedrus@FaerieMUD.org>).
@@ -376,7 +486,7 @@
 2001-04-23 18:51  Michael Granger <ged@FaerieMUD.org>
 
 	* t/: conditional.t (1.4), templates/conditionaltest.tmpl (1.2,
-	r2_37):
+	release_2_42, release_2_40, r2_37):
 
 	- Added tests for matchspec-style directives
 	
@@ -388,7 +498,7 @@
 	
 2001-04-23 18:49  Michael Granger <ged@FaerieMUD.org>
 
-	* pod/Parser.pod (2.2, r2_37):
+	* pod/Parser.pod (2.2, release_2_42, release_2_40, r2_37):
 
 	- Updated copyright statement.
 	
@@ -563,7 +673,9 @@
 	
 2000-06-22 19:15  Michael Granger <ged@FaerieMUD.org>
 
-	* t/: maxlength.t (1.1), templates/maxlengthtest.tmpl (1.1, r2_37):
+	* t/: maxlength.t (1.1), trim.t (1.1), templates/maxlengthtest.tmpl
+	(1.1, release_2_40, r2_37), templates/trimtest.tmpl (1.1,
+	release_2_40, r2_37):
 
 	Initial release
 	
@@ -612,8 +724,9 @@
 	
 2000-06-14 00:33  Michael Granger <ged@FaerieMUD.org>
 
-	* t/: inherit.t (1.1), templates/inheritChild.tmpl (1.1, r2_37),
-	templates/inheritParent.tmpl (1.1, r2_37):
+	* t/: inherit.t (1.1), templates/inheritChild.tmpl (1.1,
+	release_2_42, release_2_40, r2_37), templates/inheritParent.tmpl
+	(1.1, release_2_42, release_2_40, r2_37):
 
 	Initial release
 	
@@ -740,7 +853,7 @@
 2000-04-08 12:20  Michael Granger <ged@FaerieMUD.org>
 
 	* t/: foreach.t (2.4), join.t (2.2), templates/foreachtest.tmpl
-	(2.3), templates/jointest.tmpl (2.2, r2_37):
+	(2.3), templates/jointest.tmpl (2.2, release_2_40, r2_37):
 
 	+ Added tests for new syntax forms
 	
@@ -823,9 +936,10 @@
 2000-03-17 13:37  Michael Granger <ged@FaerieMUD.org>
 
 	* t/: grep.t (2.2), join.t (2.1), map.t (2.2), sort.t (2.2),
-	templates/greptest.tmpl (2.2, r2_37), templates/jointest.tmpl
-	(2.1), templates/maptest.tmpl (2.1, r2_37), templates/sorttest.tmpl
-	(2.1, r2_37):
+	templates/greptest.tmpl (2.2, release_2_42, release_2_40, r2_37),
+	templates/jointest.tmpl (2.1), templates/maptest.tmpl (2.1,
+	release_2_42, release_2_40, r2_37), templates/sorttest.tmpl (2.1,
+	release_2_42, release_2_40, r2_37):
 
 	/ Added new aggregate object iterator tests
 	
@@ -884,7 +998,8 @@
 	
 2000-03-13 11:13  Michael Granger <ged@FaerieMUD.org>
 
-	* t/: define.t (2.2), templates/definetest.tmpl (2.1, r2_37):
+	* t/: define.t (2.2), templates/definetest.tmpl (2.1, release_2_42,
+	release_2_40, r2_37):
 
 	+ Added test for the new-style defines
 	
@@ -919,7 +1034,7 @@
 	* t/: cache.t (2.1), comment.t (2.1), define.t (2.1), delay.t
 	(2.1), eval.t (2.1), foreach.t (2.1), grep.t (2.1), include.t
 	(2.1), map.t (2.1), meta.t (2.1), sort.t (2.1),
-	templates/cachetest.tmpl (1.1, r2_37):
+	templates/cachetest.tmpl (1.1, release_2_42, release_2_40, r2_37):
 
 	/ Modified test suite to not expect extra blanks in rendered output
 	
@@ -955,22 +1070,26 @@
 	(2.0), t/method.t (2.0), t/methodcall.t (2.0), t/objectfield.t
 	(1.2), t/objectlist.t (1.2), t/procedure.t (1.2), t/query.t (2.0),
 	t/sort.t (2.0), t/stop.t (2.0), t/templates/anchortest.tmpl (1.2),
-	t/templates/commenttest.tmpl (2.0, r2_37),
-	t/templates/definetest.tmpl (2.0), t/templates/delaytest.tmpl (2.0,
+	t/templates/commenttest.tmpl (2.0, release_2_42, release_2_40,
+	r2_37), t/templates/definetest.tmpl (2.0),
+	t/templates/delaytest.tmpl (2.0, release_2_42, release_2_40,
 	r2_37), t/templates/endtest.tmpl (1.2), t/templates/envtest.tmpl
-	(2.0, r2_37), t/templates/evaltest.tmpl (2.0, r2_37),
+	(2.0, release_2_42, release_2_40, r2_37), t/templates/evaltest.tmpl
+	(2.0, release_2_42, release_2_40, r2_37),
 	t/templates/foreachtest.tmpl (2.0), t/templates/greptest.tmpl
 	(2.0), t/templates/include.incl (2.0, r2_37),
 	t/templates/include2.incl (2.0, r2_37),
 	t/templates/includetest.tmpl (2.0, r2_37),
 	t/templates/jointest.tmpl (2.0), t/templates/maptest.tmpl (2.0),
-	t/templates/metatest.tmpl (2.0, r2_37),
+	t/templates/metatest.tmpl (2.0, release_2_42, release_2_40, r2_37),
 	t/templates/methodcalltest.tmpl (2.0), t/templates/methodtest.tmpl
-	(2.0, r2_37), t/templates/objectfieldtest.tmpl (1.2),
+	(2.0, release_2_42, release_2_40, r2_37),
+	t/templates/objectfieldtest.tmpl (1.2),
 	t/templates/objectlisttest.tmpl (1.2),
 	t/templates/proceduretest.tmpl (1.2), t/templates/querytest.tmpl
-	(2.0, r2_37), t/templates/sorttest.tmpl (2.0),
-	t/templates/stoptest.tmpl (2.0, r2_37):
+	(2.0, release_2_42, release_2_40, r2_37), t/templates/sorttest.tmpl
+	(2.0), t/templates/stoptest.tmpl (2.0, release_2_42, release_2_40,
+	r2_37):
 
 	Beta Release 2.0
 	

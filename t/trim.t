@@ -18,8 +18,9 @@ sub testArrayMethod {
 	return ['one', $self->{value}, 'three'];
 }
 
-package maxlengthTest;
+package trimTest;
 BEGIN {
+	$| = 1;
 	use Text::Templar	qw{};
 	use Text::Templar::Exceptions		qw{:syntax};
 }
@@ -38,7 +39,7 @@ print "1..$numTests\n";
 ###	1: Load template
 Test(
 	 try {
-		 $t->load("maxlengthtest.tmpl")
+		 $t->load("trimtest.tmpl")
 	 } catch Text::Templar::Exception with {
 		 my $e = shift;
 		 print STDERR $e->stringify;
@@ -48,7 +49,7 @@ Test(
 
 my $content = 'X' x 100;
 
-### 2: Add plain maxlength content
+### 2: Add plain trim content
 Test( $t->content($content) );
 
 #print STDERR $t->render;
@@ -67,22 +68,27 @@ sub Test {
 sub renderResults {
 	return <<"EOF";
 
-Maxlength test (50):
+Trim test (50):
 --------------------------------------------------
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX 
 --------------------------------------------------
 
-Maxlength test (40):
+Trim test (40):
 ----------------------------------------
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX 
 ----------------------------------------
 
-Maxlength test (30):
+Trim test (30):
 ------------------------------
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX 
 ------------------------------
 
-Maxlength test (20):
+Trim test (20):
+--------------------
+XXXXXXXXXXXXXXXXXXXX 
+--------------------
+
+Maxlength (backwards-compat) test (20):
 --------------------
 XXXXXXXXXXXXXXXXXXXX 
 --------------------

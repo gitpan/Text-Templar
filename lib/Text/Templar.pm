@@ -2,7 +2,7 @@
 ################################################################################
 #
 #  Text::Templar
-#  $Id: Templar.pm,v 2.40 2002/08/08 15:55:57 deveiant Exp $
+#  $Id: Templar.pm,v 2.42 2002/09/27 14:41:44 deveiant Exp $
 #
 #  Authors: Michael Granger <ged@FaerieMUD.org>
 #  and Dave McCorkhill <scotus@FaerieMUD.org>
@@ -34,8 +34,8 @@ BEGIN {
 
 	###	Package globals
 	use vars	qw{$VERSION $RCSID $AUTOLOAD};
-    $VERSION	= do { my @r = (q$Revision: 2.40 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-	$RCSID		= q$Id: Templar.pm,v 2.40 2002/08/08 15:55:57 deveiant Exp $;
+    $VERSION	= do { my @r = (q$Revision: 2.42 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+	$RCSID		= q$Id: Templar.pm,v 2.42 2002/09/27 14:41:44 deveiant Exp $;
 
 	### Some constants to make things more human-readable
 	use constant	TRUE	=> 1;
@@ -1146,10 +1146,10 @@ sub preprocessJOIN {
 }
 
 
-### METHOD: preprocessMAXLENGTH( $node )
-### Process the given 'MAXLENGTH' node in the parse phase. Just returns the
+### METHOD: preprocessTRIM( $node )
+### Process the given 'TRIM' node in the parse phase. Just returns the
 ### node. Throws an exception on any error.
-sub preprocessMAXLENGTH {
+sub preprocessTRIM {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
 
@@ -1168,6 +1168,9 @@ sub preprocessMAXLENGTH {
 	$node->subnodes( @filteredNodes );
 	return $node;
 }
+
+### Alias the MAXLENGTH handler to the TRIM handler
+*Text::Templar::preprocessMAXLENGTH = *Text::Templar::preprocessTRIM;
 
 
 ### METHOD: preprocessCOMMENT( $node )
@@ -1459,56 +1462,7 @@ sub renderFOREACH {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
 
-	my (
-		@realContainer,
-		@iteratedContent,
-		$realDefine,
-		$realIteration,
-		$realLastIteration,
-		$subTree,
-		$renderedSubtree,
-		$iteratorDefine,
-		@iteratedNodes,
-		$nodeName,
-	   );
-
-	### Get the defaults so we can restore 'em later
-	@realContainer = $self->getNodeContent( $node->name );
-	$realDefine = $self->getDefines( $node->name );
-	$realIteration = $self->getDefines( '$ITERATION' );
-	$realLastIteration = $self->getDefines( '$LAST_ITERATION' );
-
-	### Get the subnodes for this container
-	$subTree = $node->subnodes;
-	@iteratedContent = $self->_buildIteratedContent( $node );
-	@iteratedNodes = ();
-
-	### Build a shortcut for accessing the iterator. This will show up in the
-	### evaluation environment of anything that requires an eval in the
-	### rendering of the subtree
-	$iteratorDefine = sprintf q{$self->getNodeContent( '%s' );}, $node->name;
-
-	### Iterate over each element of the content array, overriding the real
-	### content of the node with the iterated value, and rendering the subtree
-	### inside the foreach.
-	$nodeName = $node->name || $node->object;
-	$self->setDefines( '$LAST_ITERATION' => 0 );
-	for ( my $i = 0; $i <= $#iteratedContent ; $i++ ) {
-		$self->setNodeContent( $nodeName => $iteratedContent[$i] );
-		$self->setDefines( $nodeName => $iteratorDefine );
-		$self->setDefines( '$LAST_ITERATION' => 1 ) if $i == $#iteratedContent;
-		$self->setDefines( '$ITERATION' => $i + 1 );
-
-		$renderedSubtree = $self->filterSyntaxTree( $subTree, 'render' );
-		push @iteratedNodes, @$renderedSubtree;
-	}
-
-	### Restore the real contents and define
-	$self->setNodeContent( $node->name => @realContainer );
-	$self->setDefines( '$ITERATION' => $realIteration );
-	$self->setDefines( '$LAST_ITERATION' => $realLastIteration );
-	$self->setDefines( $node->name => $realDefine );
-
+	my @iteratedNodes = $self->_renderIteratedContent( $node );
 	return $self->_getRenderedValues( @iteratedNodes );
 }
 
@@ -1791,104 +1745,16 @@ sub renderJOIN {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
 
-	my (
-		@realContainer,
-		@iteratedContent,
-		$realDefine,
-		$realIteration,
-		$realLastIteration,
-		$subTree,
-		$renderedSubtree,
-		$iteratorDefine,
-		@iteratedNodes,
-		$iteration,
-		$nodeName,
-		$separator,
-	   );
-
-	### Get the defaults so we can restore 'em later
-	@realContainer = $self->getNodeContent( $node->name );
-	$realDefine = $self->getDefines( $node->name );
-	$realIteration = $self->getDefines( '$ITERATION' );
-	$realLastIteration = $self->getDefines( '$LAST_ITERATION' );
-
-	### Get the subnodes for this container
-	$subTree = $node->subnodes;
-	@iteratedContent = @iteratedNodes = ();
-	$separator = $node->argument;
-
-	### If the foreach has an object and a methodchain, build the iterated list
-	### out of the results of calling the method chain on the object/s
-	if ( $node->object && $node->methodchain ) {
-
-		### Iterate over the objects, calling the method chain on each one
-		foreach my $object ( $self->getNodeContent($node->object) ) {
-			my @results = $self->_traverseMethodChain( $object, $node->methodchain );
-
-			if ( $node->deref ) {
-				foreach my $result ( @results ) {
-					push @iteratedContent, $self->_deref( $result );
-				}
-			}
-
-			else {
-				push @iteratedContent, @results;
-			}
-		}
-
-		$nodeName = $node->object;
-	}
-
-	### If the foreach is a dereference, figure out how to dereference the
-	### argument and set the iterated content to that.
-	elsif ( $node->object && $node->deref ) {
-		foreach my $reference ( $self->getNodeContent($node->object) ) {
-			push @iteratedContent, $self->_deref( $reference );
-		}
-
-		$nodeName = $node->object;
-	}
-
-	### If there's no object and methodchain, just use the regular node content
-	else {
-		@iteratedContent = $self->getNodeContent( $node->object || $node->name );
-		$nodeName = $node->object || $node->name;
-	}
-
-	### Build a shortcut for accessing the iterator. This will show up in the
-	### evaluation environment of anything that requires an eval in the
-	### rendering of the subtree
-	$iteratorDefine = sprintf q{$self->getNodeContent( '%s' );}, $node->name;
-
-	### Iterate over each element of the content array, overriding the real
-	### content of the node with the iterated value, and rendering the subtree
-	### inside the foreach.
-	$iteration = 1;
-	$self->setDefines( '$LAST_ITERATION' => 0 );
-	foreach my $containedElement ( @iteratedContent ) {
-		$self->setNodeContent( $node->name => $containedElement );
-		$self->setDefines( $nodeName => $iteratorDefine );
-		$self->setDefines( '$LAST_ITERATION' => 1 ) if (scalar @iteratedContent == $iteration);
-		$self->setDefines( '$ITERATION' => $iteration++ );
-
-		$renderedSubtree = $self->filterSyntaxTree( $subTree, 'render' );
-		push @iteratedNodes, $renderedSubtree;
-	}
-
-	### Restore the real contents and define
-	$self->setNodeContent( $node->name => @realContainer );
-	$self->setDefines( '$ITERATION' => $realIteration );
-	$self->setDefines( '$LAST_ITERATION' => $realLastIteration );
-	$self->setDefines( $node->name => $realDefine );
-
-	return join $separator, map { join('', @$_) } @iteratedNodes;
+	my @iteratedNodes = $self->_renderIteratedContent( $node );
+	my $separator = $self->_getEvaluatedValue( $node->quotedArgument );
+	return join $separator, @iteratedNodes;
 }
 
 
-### METHOD: renderMAXLENGTH( $node )
-### Process the given 'MAXLENGTH' node in the render phase. Throws an exception on
+### METHOD: renderTRIM( $node )
+### Process the given 'TRIM' node in the render phase. Throws an exception on
 ### any error.
-sub renderMAXLENGTH {
+sub renderTRIM {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
 
@@ -1936,6 +1802,9 @@ sub renderMAXLENGTH {
 	$content = join '', $self->filterSyntaxTree( $node->subnodes, 'render' );
 	return substr $content, 0, $length;
 }
+
+### Alias the MAXLENGTH handler to the TRIM handler
+*Text::Templar::renderMAXLENGTH = *Text::Templar::renderTRIM;
 
 
 ### METHOD: renderCOMMENT( $node )
@@ -1987,6 +1856,67 @@ sub _GetParser {
 }
 
 
+### (PROTECTED) METHOD: _renderIteratedContent( $node )
+### Build an iterator over the subnodes of the specified node using the node's
+### content.
+sub _renderIteratedContent {
+	my $self = shift	or throw Vericept::Exception::MethodError;
+	my $node = shift	or throw Vericept::Exception::ParamError 1, "node object";
+
+	my (
+		@realContainer,
+		@iteratedContent,
+		$realDefine,
+		$realIteration,
+		$realLastIteration,
+		$subTree,
+		$renderedSubtree,
+		$iteratorDefine,
+		@iteratedNodes,
+		$nodeName,
+	   );
+
+	### Get the defaults so we can restore 'em later
+	@realContainer = $self->getNodeContent( $node->name );
+	$realDefine = $self->getDefines( $node->name );
+	$realIteration = $self->getDefines( '$ITERATION' );
+	$realLastIteration = $self->getDefines( '$LAST_ITERATION' );
+
+	### Get the subnodes for this container
+	$subTree = $node->subnodes;
+	@iteratedContent = $self->_buildIteratedContent( $node );
+	@iteratedNodes = ();
+
+	### Build a shortcut for accessing the iterator. This will show up in the
+	### evaluation environment of anything that requires an eval in the
+	### rendering of the subtree
+	$iteratorDefine = sprintf q{$self->getNodeContent( '%s' );}, $node->name;
+
+	### Iterate over each element of the content array, overriding the real
+	### content of the node with the iterated value, and rendering the subtree
+	### inside the foreach.
+	$nodeName = $node->name || $node->object;
+	$self->setDefines( '$LAST_ITERATION' => 0 );
+	for ( my $i = 0; $i <= $#iteratedContent ; $i++ ) {
+		$self->setNodeContent( $nodeName => $iteratedContent[$i] );
+		$self->setDefines( $nodeName => $iteratorDefine );
+		$self->setDefines( '$LAST_ITERATION' => 1 ) if $i == $#iteratedContent;
+		$self->setDefines( '$ITERATION' => $i + 1 );
+
+		$renderedSubtree = $self->filterSyntaxTree( $subTree, 'render' );
+		push @iteratedNodes, join( '', @$renderedSubtree );
+	}
+
+	### Restore the real contents and define
+	$self->setNodeContent( $node->name => @realContainer );
+	$self->setDefines( '$ITERATION' => $realIteration );
+	$self->setDefines( '$LAST_ITERATION' => $realLastIteration );
+	$self->setDefines( $node->name => $realDefine );
+
+	return @iteratedNodes;
+}
+
+
 ### (PROTECTED) METHOD: _buildIteratedContent( $node )
 ### Build a list of content that will be iterated over out of the given I<node>.
 sub _buildIteratedContent {
@@ -2002,6 +1932,12 @@ sub _buildIteratedContent {
 		### Iterate over the objects, calling the method chain on each one
 		foreach my $object ( $self->getNodeContent($node->object) ) {
 			my @results = $self->_traverseMethodChain( $object, $node->methodchain );
+
+			# Debugging simplified deref in the grammar
+			# printf STDERR ( "Deref for '%s' is: '%s'\n",
+			#				$node->name,
+			#				(defined $node->deref ? $node->deref : '(undef)') );
+			# STDERR->flush;
 
 			# If the node's a hash iterator, build the iterated content
 			if ( $node->pair ) {
@@ -2515,7 +2451,7 @@ sub _buildClosure {
 								 Data::Dumper->Dumpxs([$defines{$varname}],
 													  [$varname]) );
 			} else {
-				$line = sprintf( "my \$%s = %s;\n",
+				$line = sprintf( "my (\$%s) = %s;\n",
 								 $varname,
 								 defined $defines{$varname}
 									? $defines{$varname}
@@ -2877,6 +2813,13 @@ DESTROY		{}
 		}
 		return @{$self}[1..$#$self];
 	}
+	sub deref {
+		my $self = shift or return ();
+		return 1 if exists $self->[0]{deref}
+			&& defined $self->[0]{deref}
+			&& ref $self->[0]{deref} eq 'ARRAY'
+			&& scalar @{$self->[0]{deref}};
+	}
 
 }
 
@@ -2939,6 +2882,7 @@ DESTROY		{}
 {	package Text::Templar::SORT;		our @ISA = qw{Text::Templar::containernode}}
 {	package Text::Templar::JOIN;		our @ISA = qw{Text::Templar::containernode}}
 {	package Text::Templar::COMMENT;		our @ISA = qw{Text::Templar::containernode}}
+{	package Text::Templar::TRIM;		our @ISA = qw{Text::Templar::containernode}}
 {	package Text::Templar::MAXLENGTH;	our @ISA = qw{Text::Templar::containernode}}
 {	package Text::Templar::DELAYED;		our @ISA = qw{Text::Templar::containernode}}
 
@@ -3017,7 +2961,8 @@ DESTROY		{}
 		my @args = @_ or return undef;
 
 		foreach my $arg ( @args ) {
-			return () unless grep { $_ eq $arg } @$self;
+			my @content = $self->content;
+			return () unless grep { $_ eq $arg } @content;
 		}
 
 		return @args;

@@ -22,7 +22,6 @@ t/include.t
 t/inherit.t
 t/join.t
 t/map.t
-t/maxlength.t
 t/meta.t
 t/method.t
 t/methodcall.t
@@ -46,10 +45,11 @@ t/templates/inheritChild.tmpl
 t/templates/inheritParent.tmpl
 t/templates/jointest.tmpl
 t/templates/maptest.tmpl
-t/templates/maxlengthtest.tmpl
 t/templates/metatest.tmpl
 t/templates/methodcalltest.tmpl
 t/templates/methodtest.tmpl
 t/templates/querytest.tmpl
 t/templates/sorttest.tmpl
 t/templates/stoptest.tmpl
+t/templates/trimtest.tmpl
+t/trim.t

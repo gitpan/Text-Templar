@@ -179,3 +179,14 @@ Custom-sorted (reverse by-value) hash iterator (hashref) from methodChain start:
 ----------------------------------------------------------------------
 Custom-sorted hash iterator (hashref) from methodChain end.
 
+Iterator local variable bug test:
+----------------------------------------------------------------------
+<% FOREACH obj IN testLocalizedIterator %>
+<% IF { $obj->value =~ m/testValue #[24]/ } %>
+	>>> <% METHODCALL obj value %>
+<% END IF %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Iterator local variable bug test end.
+
+

@@ -62,6 +62,11 @@ Turn on tracing of the parser via RD_TRACE.
 Specify a rule to start the parse from. This defaults to the first rule in the
 grammar.
 
+=item -e, --tree
+
+Print the abstract syntax tree parsed from the specified target file using the
+given grammar.
+
 =back
 
 =head1 REQUIRES
@@ -104,8 +109,8 @@ BEGIN {
 
 	### Versioning stuff and custom includes
 	use vars qw{$VERSION $RCSID};
-	$VERSION	= do { my @r = (q$Revision: 1.1 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-	$RCSID		= q$Id: checkparser.pl,v 1.1 2002/08/08 10:16:16 deveiant Exp $;
+	$VERSION	= do { my @r = (q$Revision: 1.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+	$RCSID		= q$Id: checkparser.pl,v 1.2 2002/08/29 17:51:54 deveiant Exp $;
 
 	### Define some constants
 	use constant TRUE	=> 1;
@@ -147,6 +152,8 @@ MAIN: {
 		$target,				# The path to the target file
 		$parser,				# The parser generated from the grammar
 		$toprule,				# The top-most rule to parse from
+		$printTreeFlag,			# Print the AST for the target?
+		$tree,					# The tree parsed from the target
 	   );
 
 	# Print the program header and read in command line options
@@ -159,6 +166,7 @@ MAIN: {
 		'p|ptrace'		=> \$traceGrammarFlag,
 		't|trace'		=> \$traceFlag,
 		'r|rule=s'		=> \$toprule,
+		'e|tree'		=> \$printTreeFlag,
 	   ) or abortWithUsage();
 
 	# If the -h flag or -V flag was given, just show the help or version,
@@ -177,8 +185,11 @@ MAIN: {
 	# Check for other error conditions
 	abort( "--trace requires a target file to be specified." )
 		if $traceFlag && !$target;
+	abort( "--tree requires a target file to be specified." )
+		if $printTreeFlag && !$target;
 	abortWithUsage( "The 'warn' level must be a number between 1 and 3." )
 		unless ( $warnLevel >= 1 && $warnLevel <= 3 );
+
 
 	$::RD_WARN = $warnLevel;
 	$::RD_HINT = $hintsFlag ? 1 : 0;
@@ -187,7 +198,17 @@ MAIN: {
 	$parser = loadGrammar( $grammar, $traceGrammarFlag );
 
 	# Now parser the target file, if one was specified.
-	parseTarget( $parser, $target, $traceFlag, $toprule ) if $target;
+	$tree = parseTarget( $parser, $target, $traceFlag, $toprule ) if $target;
+
+	if ( $tree ) {
+		$Prompter->message( "Parse succeeded." );
+
+		# Print the parse tree, if such was requested
+		$Prompter->message( "Parse tree: \n%s", Data::Dumper->Dumpxs([$tree], [$toprule]) )
+			if $printTreeFlag;
+	} else {
+		$Prompter->errorMsg( "Parse failed." );
+	}
 
 	exit;
 }
@@ -233,13 +254,9 @@ sub parseTarget {
 	my $target = readFile( $targetFile );
 
 	$Prompter->header( "Starting parse with '%s' rule.", $topRule );
-	my $rv = $parser->$topRule( $target );
+	my $tree = $parser->$topRule( $target );
 
-	if ( $rv ) {
-		$Prompter->message( "Parse succeeded: %s", Data::Dumper->Dumpxs( [$rv], [$topRule] ) );
-	} else {
-		$Prompter->errorMsg( "Parse failed." );
-	}
+	return $tree;
 }
 
 

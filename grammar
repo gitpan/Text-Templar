@@ -1,7 +1,7 @@
 # -*- makefile -*-
 #
 #	grammar for Text::Templar::Parser
-#	$Id: grammar,v 2.19 2002/08/08 10:19:15 deveiant Exp $
+#	$Id: grammar,v 2.20 2002/08/29 18:20:33 deveiant Exp $
 #
 #  This is a Parse::RecDescent grammar for the Text::Templar::Parser module,
 #  which is part of the Text::Templar module. The code for Parser.pm is
@@ -24,7 +24,7 @@
 #  (POD is in Parser.pod)
 #
 #	For Makefile.PL:
-#	( $VERSION ) = '$Revision: 2.19 $ ' =~ m{\$Revision:\s+(\S+)}; }
+#	( $VERSION ) = '$Revision: 2.20 $ ' =~ m{\$Revision:\s+(\S+)}; }
 #
 
 
@@ -83,7 +83,10 @@ unitagName:		'METHODCALL'| 'METHOD'		| 'DEFINE'		|
 containerTagName:
 				'FOREACH'	| 'GREP'		| 'JOIN'		| 
 				'COMMENT'	| 'DELAYED'		| 'MAP'			|
-				'SORT'		| 'MAXLENGTH'
+				'SORT'		| trimTag
+
+# TRIM with a backwards-compatible alias 'MAXLENGTH'
+trimTag:		'TRIM'		| 'MAXLENGTH'
 
 conditionalTagName:
 				'IF'
@@ -168,12 +171,23 @@ INHERIT_tag:	name									{ \%item }
 FOREACH_tag:	pair name in(?) object hashpairsort					{ \%item }
 				| pair name in(?) object methodchain hashpairsort	{ \%item }
 				| pair name in(?) object methodchain				{ \%item }
-				| pair name in(?) object							{ \%item }
-				| name in(?) deref object methodchain				{ \%item }
-				| name in(?) deref object							{ \%item }
-				| name in(?) object methodchain						{ \%item }
-				| name in(?) object									{ \%item }
+				| pair <commit> name in(?) object					{ \%item }
+				| name in(?) deref(?) object methodchain			{ \%item }
+				| name in(?) deref(?) object						{ \%item }
 				| name												{ \%item }
+				| <error>
+
+JOIN_tag:		pair name in(?) object with(?) quotedArgument		{ \%item }
+				| pair name in(?) object hashpairsort <commit>
+					with(?) quotedArgument							{ \%item }
+				| pair name in(?) object methodchain 
+					with(?) quotedArgument							{ \%item }
+				| pair <commit> name in(?) object methodchain
+					hashpairsort with(?) quotedArgument				{ \%item }
+				| name with(?) quotedArgument						{ \%item }
+				| name in(?) deref(?) object with(?) quotedArgument	{ \%item }
+				| name in(?) deref(?) object methodchain 
+					with(?) quotedArgument							{ \%item }
 				| <error>
 
 IF_tag:			object methodchain matches(?) matchspec				{ \%item }
@@ -197,23 +211,20 @@ GREP_tag:		name with(?) codeblock								{ \%item }
 				| name in(?) object methodchain with(?) codeblock	{ \%item }
 				| <error>
 
-JOIN_tag:		name with(?) argument								{ \%item }
-				| name in(?) object with(?) argument				{ \%item }
-				| name in(?) object methodchain with(?) argument	{ \%item }
-				| <error>
-
 COMMENT_tag:	empty												{ \%item }
 				| <error>
 
 DELAYED_tag:	empty												{ \%item }
 				| <error>
 
-MAXLENGTH_tag:	object methodchain									{ \%item }
+TRIM_tag:		object methodchain									{ \%item }
 				| integer											{ \%item }
 				| name												{ \%item }
 				| codeblock											{ \%item }
 				| variable											{ \%item }
 				| <error>
+
+MAXLENGTH_tag:	TRIM_tag
 
 
 ###############################################################################
@@ -316,6 +327,6 @@ quotedArgumentlist:	quotedArgument m{(,|=>)} quotedArgumentlist(s)
 
 quotedArgument:	m{[\d\.]+}
 				| <perl_variable>
-				| <perl_quotelike>				{ sprintf 'q{%s}', $item[1]->[2] }
+				| <perl_quotelike>				{join('', @{$item[1]}[0..4])}
 
 

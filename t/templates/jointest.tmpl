@@ -16,3 +16,115 @@ Method list start:
 '<% JOIN value IN testObject values WITH "', '" %><% METHOD value %><% END JOIN %>'
 ----------------------------------------------------------------------
 Method list end.
+
+
+== Hash Iterators ====================================================
+
+Hash iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashIter WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Hash iterator end.
+
+Key-sorted hash iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashIter SORT BY_KEY WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Key-sorted hash iterator end.
+
+Value-sorted hash iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashIter SORT BY_VALUE WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Value-sorted hash iterator end.
+
+Custom-sorted (by second letter of key) hash iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashIter SORT {
+		substr($a->{key},1) cmp substr($b->{key},1)
+	} WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Custom-sorted (by second letter of key) hash iterator end.
+
+
+== Hashref Iterators =================================================
+
+Hashref iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashrefIter WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Hashref iterator end.
+
+Key-sorted hashref iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashrefIter SORT BY_KEY WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Key-sorted hashref iterator end.
+
+Value-sorted hashref iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashrefIter SORT BY_VALUE WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Value-sorted hashref iterator end.
+
+Custom-sorted (by reverse key) hashref iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashrefIter SORT {
+		scalar reverse($a->{key}) cmp scalar reverse($b->{key})
+	} WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Custom-sorted (by reverse key) hashref iterator end.
+
+
+=== Hash from MethodChain Iterator ===================================
+
+Hash From Methodchain iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashIterObject hash WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Hash From Methodchain iterator end.
+
+Key-sorted hash from methodchain iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashIterObject hash SORT BY_KEY WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Key-sorted hash from methodchain iterator end.
+
+Value-sorted hash from methodchain iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashIterObject hash SORT BY_VALUE WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Value-sorted hash from methodchain iterator end.
+
+Custom-sorted (reverse by-value) hash from methodchain iterator start:
+----------------------------------------------------------------------
+	<% JOIN PAIR pair IN testHashIterObject hash SORT {
+		$b->{value} cmp $a->{value}
+	} WITH ",\n\t" %><%
+		METHODCALL pair key %> => '<% METHODCALL pair value %>'<%
+		END JOIN %> 
+----------------------------------------------------------------------
+Custom-sorted (reverse by-value) hash from methodchain iterator end.
+

@@ -17,6 +17,7 @@ sub testMethod {
 package methodcall_test;
 
 BEGIN {
+	$| = 1;
 	use Text::Templar	qw{};
 	use Text::Templar::Exceptions		qw{:syntax};
 }

@@ -9,6 +9,7 @@ package main;
 use strict;
 
 BEGIN {
+	$| = 1;
 	unshift @INC, qw{blib/lib blib/arch};
 
 	use vars qw{$Logfile};

@@ -2,6 +2,7 @@
 use strict;
 
 BEGIN {
+	$| = 1;
 	use vars qw{$WarningGiven};
 
 	use Text::Templar	qw{};

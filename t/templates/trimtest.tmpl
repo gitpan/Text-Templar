@@ -1,26 +1,33 @@
 
-Maxlength test (50):
+Trim test (50):
 --------------------------------------------------
-<% MAXLENGTH 50 %>
+<% TRIM 50 %>
 <% METHOD content %>
-<% END MAXLENGTH %> 
+<% END TRIM %> 
 --------------------------------------------------
 
-Maxlength test (40):
+Trim test (40):
 ----------------------------------------
-<% MAXLENGTH 40 %>
+<% TRIM 40 %>
 <% METHOD content %>
-<% END MAXLENGTH %> 
+<% / TRIM %> 
 ----------------------------------------
 
-Maxlength test (30):
+Trim test (30):
 ------------------------------
-<% MAXLENGTH 30 %>
+<% TRIM 30 %>
 <% METHOD content %>
-<% END MAXLENGTH %> 
+<% END TRIM %> 
 ------------------------------
 
-Maxlength test (20):
+Trim test (20):
+--------------------
+<% TRIM 20 %>
+<% METHOD content %>
+<% /TRIM %> 
+--------------------
+
+Maxlength (backwards-compat) test (20):
 --------------------
 <% MAXLENGTH 20 %>
 <% METHOD content %>
