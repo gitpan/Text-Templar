@@ -9,7 +9,8 @@ package main;
 use strict;
 
 BEGIN {
-	$| = 1;
+    select(STDERR); $| = 1;	# make unbuffered
+    select(STDOUT); $| = 1;	# make unbuffered
 	unshift @INC, qw{blib/lib blib/arch};
 
 	use vars qw{$Logfile};
@@ -115,7 +116,7 @@ Illegal array index:
 <!--  Error in methodchain: ARRAY\(0x\w+\): Can't use 'something' as an array index  -->
 
 Method on string after one chain:
-<!--  Error in methodchain: calling ->something\(\) on ARRAY\(0x\w+\)->\[1\]: Can't locate object method "something" via package "dim" \(perhaps you forgot to load "dim"\?\) at \(eval \d+\) line \d+\.  -->
+<!--  Error in methodchain: calling ->something\(\) on ARRAY\(0x\w+\)->\[1\]: Can't locate object method "something" via package "dim" (?:\(perhaps you forgot to load "dim"\?\))? at \(eval \d+\) line \d+\.  -->
 
 Some other stuff.
 
@@ -143,5 +144,5 @@ Some other stuff.
 
 <!--  A evaluation error 'Error in methodchain: ARRAY\(0x\w+\): Can't use 'something' as an array index' occurred([^-]+|-(?!->))+-->
 
-<!--  A evaluation error 'Error in methodchain: calling ->something\(\) on ARRAY\(0x\w+\)->\[1\]: Can't locate object method "something" via package "dim" \(perhaps you forgot to load "dim"\?\) at \(eval \d+\) line \d+\.' occurred([^-]+|-(?!->))+-->}s}
+<!--  A evaluation error 'Error in methodchain: calling ->something\(\) on ARRAY\(0x\w+\)->\[1\]: Can't locate object method "something" via package "dim" (?:\(perhaps you forgot to load "dim"\?\))? at \(eval \d+\) line \d+\.' occurred([^-]+|-(?!->))+-->}s}
 

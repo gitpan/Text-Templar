@@ -2,7 +2,8 @@
 use strict;
 
 BEGIN {
-	$| = 1;
+    select(STDERR); $| = 1;	# make unbuffered
+    select(STDOUT); $| = 1;	# make unbuffered
 	use Text::Templar	qw{};
 	use Text::Templar::Exceptions		qw{:syntax};
 }
@@ -14,6 +15,9 @@ my $pt = new Text::Templar
 	or print( "1..0\n" ), exit 0;
 my $ct = new Text::Templar
 	includePath => [ './t/templates' ];
+my $gct = new Text::Templar
+	includePath => [ './t/templates' ];
+
 my $numTests = 3;
 my $numTest = 0;
 
@@ -23,7 +27,8 @@ print "1..$numTests\n";
 Test(
 	 try {
 		 $pt->load("inheritParent.tmpl");
-		 $ct->load("inheritChild.tmpl")
+		 $ct->load("inheritChild.tmpl");
+		 $gct->load("inheritGrandchild.tmpl");
 	 } catch Text::Templar::Exception with {
 		 my $e = shift;
 		 print STDERR $e->stringify;
@@ -37,14 +42,19 @@ $pt->inheritedValue( "should be inherited" );
 $pt->overiddenValue( "overidden (parent)" );
 $pt->nonInheritedValue( "should not be inherited" );
 
+$gct->overiddenValue( "overidden (grandchild)" );
+
 $ct->overiddenValue( "overidden (child)" );
+$ct->grandchild( $gct );
+
 $pt->childTemplate( $ct );
 Test( exists $ct->{inheritedContent}{overiddenValue} );
 
 #print STDERR $pt->render;
 
 ### 3: Rendered output
-Test( $pt->render eq test4results() );
+my $regex = makeResultsPattern();
+Test( $pt->render =~ $regex );
 
 
 sub Test {
@@ -53,9 +63,8 @@ sub Test {
     $result;
 }
 
-sub test4results {
-	return <<"EOF";
-
+sub makeResultsPattern {
+	return qr{
 Parent inherited value:
 --------------------------------------------------
 should be inherited
@@ -63,7 +72,7 @@ should be inherited
 
 Parent overridden value:
 --------------------------------------------------
-overidden (parent)
+overidden \(parent\)
 --------------------------------------------------
 
 Parent non-inherited value:
@@ -74,24 +83,41 @@ should not be inherited
 Child template:
 --------------------------------------------------
 
-	Child inherited value:
-	--------------------------------------------------
-	should be inherited
-	--------------------------------------------------
+\s+Child inherited value:
+\s+--------------------------------------------------
+\s+should be inherited
+\s+--------------------------------------------------
 
-	Child overridden value:
-	--------------------------------------------------
-	overidden (child)
-	--------------------------------------------------
+\s+Child overridden value:
+\s+--------------------------------------------------
+\s+overidden \(child\)
+\s+--------------------------------------------------
 
-	Child non-inherited value:
-	--------------------------------------------------
-	
-	--------------------------------------------------
+\s+Child non-inherited value:
+\s+--------------------------------------------------
+\s+
+\s+--------------------------------------------------
+
+\s+Grandchild template:
+\s+--------------------------------------------------
+\s*
+\s+Grandchild inherited value:
+\s+--------------------------------------------------
+\s+should be inherited
+\s+--------------------------------------------------
+
+\s+Grandchild overridden value:
+\s+--------------------------------------------------
+\s+overidden \(grandchild\)
+\s+--------------------------------------------------
+
+\s+Grandchild non-inherited value:
+\s+--------------------------------------------------
+\s+
+\s+--------------------------------------------------
+
+\s+--------------------------------------------------
 
 --------------------------------------------------
-
-
-
-EOF
+}s;
 }

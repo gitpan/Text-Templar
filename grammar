@@ -1,7 +1,7 @@
 # -*- makefile -*-
 #
 #	grammar for Text::Templar::Parser
-#	$Id: grammar,v 2.20 2002/08/29 18:20:33 deveiant Exp $
+#	$Id: grammar,v 2.25 2002/12/31 21:07:17 deveiant Exp $
 #
 #  This is a Parse::RecDescent grammar for the Text::Templar::Parser module,
 #  which is part of the Text::Templar module. The code for Parser.pm is
@@ -24,7 +24,7 @@
 #  (POD is in Parser.pod)
 #
 #	For Makefile.PL:
-#	( $VERSION ) = '$Revision: 2.20 $ ' =~ m{\$Revision:\s+(\S+)}; }
+#	( $VERSION ) = '$Revision: 2.25 $ ' =~ m{\$Revision:\s+(\S+)}; }
 #
 
 
@@ -78,7 +78,7 @@ conditionalSubtag:
 unitagName:		'METHODCALL'| 'METHOD'		| 'DEFINE'		|
 				'STOP'		| 'EVAL'		| 'INCLUDE'		|
 				'QUERY'		| 'ENV'			| 'META'		|
-				'INHERIT'	| 'DUMP'
+				'INHERIT'	| 'DUMP'		| 'CUT'
 
 containerTagName:
 				'FOREACH'	| 'GREP'		| 'JOIN'		| 
@@ -154,18 +154,20 @@ META_tag:		name argument							{ \%item }
 ELSE_tag:		empty									{ \%item }
 				| <error>
 
-ELSIF_tag:		object methodchain matches(?) matchspec	{ \%item }
-				| object methodchain					{ \%item }
-				| name matches(?) matchspec				{ \%item }
-				| name									{ \%item }
-				| variable matches(?) matchspec			{ \%item }
-				| variable								{ \%item }
-				| codeblock								{ \%item }
+ELSIF_tag:		name matches(?) matchspec							{ \%item }
+				| deref(?) object methodchain matches(?) matchspec	{ \%item }
+				| deref(?) object methodchain						{ \%item }
+				| name												{ \%item }
+				| variable matches(?) matchspec						{ \%item }
+				| variable											{ \%item }
+				| codeblock											{ \%item }
 				| <error>
 
 INHERIT_tag:	name									{ \%item }
 				| <error>
 
+CUT_tag:		empty									{ \%item }
+				| <error>
 
 ### Container tags
 FOREACH_tag:	pair name in(?) object hashpairsort					{ \%item }
@@ -190,9 +192,9 @@ JOIN_tag:		pair name in(?) object with(?) quotedArgument		{ \%item }
 					with(?) quotedArgument							{ \%item }
 				| <error>
 
-IF_tag:			object methodchain matches(?) matchspec				{ \%item }
-				| object methodchain								{ \%item }
-				| name matches(?) matchspec							{ \%item }
+IF_tag:			name matches(?) matchspec							{ \%item }
+				| deref(?) object methodchain matches(?) matchspec	{ \%item }
+				| deref(?) object methodchain						{ \%item }
 				| name												{ \%item }
 				| variable matches(?) matchspec						{ \%item }
 				| variable											{ \%item }
@@ -301,8 +303,8 @@ hash:			'{' argumentlist '}'			{bless {@{$item{argumentlist}}}, "Text::Templar::
 regexp:			'/' m{([^/]|(?<=\\)/)+} '/'		{bless do { my $r = qr{$item[2]} }, "Text::Templar::$item[0]"}
 
 
-methodchain:	method m{(\.|->)} methodchain(s)
-					{[ $item[1], (ref $item[3][0] eq 'ARRAY' ? @{$item[3][0]} : $item[3][0]) ]}
+methodchain:	method m{(\.|->)} methodchain
+					{[ $item[1], @{$item[3]} ]}
 				| method
 					{[ $item[1] ]}
 

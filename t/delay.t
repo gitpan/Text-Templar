@@ -2,7 +2,8 @@
 use strict;
 
 BEGIN {
-	$| = 1;
+    select(STDERR); $| = 1;	# make unbuffered
+    select(STDOUT); $| = 1;	# make unbuffered
 	use vars qw{$WarningGiven};
 
 	use Text::Templar	qw{};

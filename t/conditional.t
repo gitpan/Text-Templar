@@ -15,7 +15,8 @@ sub testMethod {
 
 package conditionalTest;
 BEGIN {
-	$| = 1;
+    select(STDERR); $| = 1;	# make unbuffered
+    select(STDOUT); $| = 1;	# make unbuffered
 	use Text::Templar	qw{};
 	use Text::Templar::Exceptions		qw{:syntax};
 }
@@ -24,7 +25,7 @@ my $t = new Text::Templar
 	includePath => [ './t/templates' ]
 	or print( "1..0\n" ), exit 0;
 
-my $numTests = 11;
+my $numTests = 13;
 my $numTest = 0;
 
 print "1..$numTests\n";
@@ -58,15 +59,24 @@ Test( $t->innerConditional(0) || 1 );
 Test( $t->unreachedOuterConditional(0) || 1 );
 Test( $t->unreachedInnerConditional(1) );
 
+### 10: name MATCHES /regexp/ match
+Test( $t->matchConditional( 'yep...' ) );
+
 my $o = new testObject 'yep';
 
-### 10: Methodcall conditional
+### 11: Methodcall conditional
 Test( $t->conditionalObject($o) );
+
+my $o2 = new testObject ['yep'];
+
+### 12: Methodcall w/deref conditional
+Test( $t->conditionalDerefObject($o2) );
 
 #print STDERR $t->render;
 
-### 11: Render
-Test( $t->render eq renderResults() );
+### 13: Render
+my $resultsRe = renderResults();
+Test( $t->render =~ /$resultsRe/  );
 
 
 
@@ -77,8 +87,7 @@ sub Test {
 }
 
 sub renderResults {
-	return <<"EOF";
-
+	return quotemeta(<<"EOF");
 Simple conditional test:
 --------------------------------------------------
     Condition passed.
@@ -89,9 +98,32 @@ Compound conditional test:
     Condition passed.
 --------------------------------------------------
 
+Match conditional test:
+--------------------------------------------------
+    Condition passed.
+--------------------------------------------------
+
+Negative match conditional test:
+--------------------------------------------------
+--------------------------------------------------
+
+Match conditional test 2:
+--------------------------------------------------
+    Condition passed.
+--------------------------------------------------
+
+Negative match conditional test 2:
+--------------------------------------------------
+--------------------------------------------------
+
 Complex conditional test:
 --------------------------------------------------
     Other condition passed.
+--------------------------------------------------
+
+Complex match conditional test:
+--------------------------------------------------
+    Condition matched.
 --------------------------------------------------
 
 Reached nested conditional test:
@@ -118,6 +150,24 @@ Methodcall + Regexp matchspec conditional failure test:
 --------------------------------------------------
 --------------------------------------------------
 
+Methodcall + Regexp matchspec conditional test:
+--------------------------------------------------
+    Regexp condition passed.
+--------------------------------------------------
+
+Methodcall + Regexp matchspec conditional failure test:
+--------------------------------------------------
+--------------------------------------------------
+
+Methodcall + Array matchspec conditional test:
+--------------------------------------------------
+    Array condition passed.
+--------------------------------------------------
+
+Methodcall + Array matchspec conditional failure test:
+--------------------------------------------------
+--------------------------------------------------
+
 Methodcall + Array matchspec conditional test:
 --------------------------------------------------
     Array condition passed.
@@ -136,5 +186,22 @@ Methodcall + Hash matchspec conditional failure test:
 --------------------------------------------------
 --------------------------------------------------
 
+Methodcall + Hash matchspec conditional test:
+--------------------------------------------------
+    Condition passed.
+--------------------------------------------------
+
+Methodcall + Hash matchspec conditional failure test:
+--------------------------------------------------
+--------------------------------------------------
+
+Match methodcall with deref:
+--------------------------------------------------
+    Condition passed.
+--------------------------------------------------
+
+Match methodcall with deref2:
+--------------------------------------------------
+--------------------------------------------------
 EOF
 }

@@ -189,4 +189,14 @@ Iterator local variable bug test:
 ----------------------------------------------------------------------
 Iterator local variable bug test end.
 
-
+Nested iterator $ITERATOR bug:
+----------------------------------------------------------------------
+<% FOREACH list IN testNestedIterator %>
+outer>>> <% EVAL $ITERATION %>
+<% FOREACH obj IN DEREF list %>
+	inner>>> <% EVAL $ITERATION %>
+<% END FOREACH %>
+outer<<< <% EVAL $ITERATION %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Nested iterator $ITERATOR bug test end.

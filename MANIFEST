@@ -11,6 +11,7 @@ pod/Templar.pod
 t/cache.t
 t/comment.t
 t/conditional.t
+t/cut.t
 t/define.t
 t/delay.t
 t/env.t
@@ -31,6 +32,7 @@ t/stop.t
 t/templates/cachetest.tmpl
 t/templates/commenttest.tmpl
 t/templates/conditionaltest.tmpl
+t/templates/cuttest.tmpl
 t/templates/definetest.tmpl
 t/templates/delaytest.tmpl
 t/templates/envtest.tmpl
@@ -42,6 +44,7 @@ t/templates/include.incl
 t/templates/include2.incl
 t/templates/includetest.tmpl
 t/templates/inheritChild.tmpl
+t/templates/inheritGrandchild.tmpl
 t/templates/inheritParent.tmpl
 t/templates/jointest.tmpl
 t/templates/maptest.tmpl

@@ -1,13 +1,13 @@
-# -*- cperl-mode -*-
+# -*- cperl -*-
 ################################################################################
 #
 #  Templar.pod - POD documentation for the Text::Templar class
-#  $Id: Templar.pod,v 1.14 2002/08/08 22:44:05 deveiant Exp $
+#  $Id: Templar.pod,v 1.18 2003/01/15 21:20:19 deveiant Exp $
 #
 #  Authors: Michael Granger <ged@FaerieMUD.org>
 #  and Dave McCorkhill <scotus@FaerieMUD.org>
 #
-#  Copyright (c) 1998-2002 Michael Granger and The FaerieMUD Consortium. All
+#  Copyright (c) 1998-2003 Michael Granger and The FaerieMUD Consortium. All
 #  rights reserved.
 #
 #  This module is free software. You may use, modify, and/or redistribute this
@@ -32,17 +32,18 @@ Text::Templar - a document-generation object class
   
   my $template = <<'EOF';
   
-  <HTML><HEAD><TITLE>This is the title: <% METHOD title %></TITLE></HEAD>
+  <html><head><title>This is the title: <% METHOD title %></title></head>
   
-  <BODY>
+  <body>
   
   <% METHOD body %>
   
-  <ADDRESS>
+  <address>
   <% METHOD footer %>
-  </ADDRESS>
+  </address>
   
-  </BODY>
+  </body>
+  </html>
   EOF
   
   my $templateObject = new Text::Templar
@@ -70,7 +71,7 @@ None.
 Michael Granger E<lt>ged@FaerieMUD.orgE<gt> and Dave McCorkhill
 E<lt>scotus@FaerieMUD.orgE<gt>.
 
-Copyright (c) 1998-2001 Michael Granger and The FaerieMUD Consortium. All rights
+Copyright (c) 1998-2003 Michael Granger and The FaerieMUD Consortium. All rights
 reserved.
 
 This module is free software. You may use, modify, and/or redistribute this
@@ -110,7 +111,7 @@ controlling program. Directives parsed from the template source control the
 structure and behavior of the resultant object. If the template content fails to
 parse, an exception is generated which you may catch by wrapping the call to
 C<load()> in an C<eval BLOCK>, or by using the C<try>/C<catch> functions from
-the L<Text::Templar::Exception|Text::Templar::Exception> module.
+the L<Text::Templar::Exceptions|Text::Templar::Exceptions> module.
 
 =head3 Interaction Phase
 
@@ -478,6 +479,33 @@ Would render as:
 
   This stuff will be rendered.
 
+=head3 CUT directive
+
+  <% CUT %>
+
+The B<CUT> directive is a top-wise STOP; it indicates that the parser should not
+start rendering until the point at which it is encountered. Template content
+above the B<CUT> directive will be parsed, and will be reflected in the
+structure of the template object, but will not show up when rendered.
+
+B<Examples:>
+
+In the template:
+
+  This stuff won't be rendered. But I can still <% DEFINE something = 'here' %>.
+
+  <% CUT %>
+  
+  This stuff will be rendered.
+  
+In the program:
+
+  $template->getDefines( 'something' ); # -> Returns 'here'
+
+Would render as:
+
+  This stuff will be rendered.
+
 =head3 EVAL directive
 
   <% EVAL <variable> <format> %>
@@ -593,7 +621,7 @@ list template details which do not belong in the regular template attributes.
 B<Examples:>
 
   <% META template-author 'Michael Granger' %>
-  <% META rscid q$Id: Templar.pod,v 1.14 2002/08/08 22:44:05 deveiant Exp $>
+  <% META rscid q$Id: Templar.pod,v 1.18 2003/01/15 21:20:19 deveiant Exp $>
 
 =head3 INHERIT directive
 
@@ -918,7 +946,7 @@ B<Examples:>
 In the template:
 
   <% COMMENT %>
-    Template RCSID: $Id: Templar.pod,v 1.14 2002/08/08 22:44:05 deveiant Exp $
+    Template RCSID: $Id: Templar.pod,v 1.18 2003/01/15 21:20:19 deveiant Exp $
   <% /COMMENT %>
   
   <P>Something</P>

@@ -6,3 +6,9 @@ Test 4: <% METHODCALL test4 one.testMethod %>
 Test 5: <% METHODCALL test5 0 %>
 Test 5: <% METHODCALL test5 1 %>
 
+Test 6: <% METHODCALL test6 obj.testMethod.testMethod2 %>
+Test 6: <% METHODCALL test6 obj->testMethod->testMethod2 %>
+Test 6: <% METHODCALL test6 obj.testMethod().testMethod2 %>
+Test 6: <% METHODCALL test6 obj()->testMethod->testMethod2() %>
+
+

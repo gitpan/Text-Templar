@@ -6,6 +6,7 @@ BEGIN {
     select(STDOUT); $| = 1;	# make unbuffered
 	use Text::Templar	qw{};
 	use Text::Templar::Exceptions		qw{:syntax};
+	use Scalar::Util	qw{blessed};
 }
 
 #$Text::Templar::Debug = Text::Templar::DEBUG_ALL;
@@ -13,8 +14,7 @@ BEGIN {
 my $t = new Text::Templar 
 	includePath => [ './t/templates' ]
 	or print( "1..0\n" ), exit 0;
-
-my $numTests = 2;
+my $numTests = 4;
 my $numTest = 0;
 
 print "1..$numTests\n";
@@ -22,7 +22,7 @@ print "1..$numTests\n";
 ###	1: Load template
 Test(
 	 try {
-		 $t->load("includetest.tmpl")
+		 $t->load("cuttest.tmpl")
 	 } catch Text::Templar::Exception with {
 		 my $e = shift;
 		 print STDERR $e->stringify;
@@ -30,10 +30,17 @@ Test(
 	 }
 );
 
+# 2: Make sure the method above the cut can still be called
+Test( $t->this('above') );
+
+# 3: Make sure it still can hold a value
+Test( $t->getNodeContent('this') );
+
+$t->that('below.');
 #print STDERR $t->render;
 
-### 2: Render
-Test( $t->render eq renderResults() );
+### 4: Render
+Test( $t->render eq renderedOutput() );
 
 
 sub Test {
@@ -42,16 +49,11 @@ sub Test {
     $result;
 }
 
-sub renderResults {
+sub renderedOutput {
 	return <<"EOF";
-This is the include test: (./t/templates/includetest.tmpl)
+This is below the cut.
 
-Here's an included template:
+below.
 
-Template: ./t/templates/include.incl
->> This is the first included template: Here's another:
-
-Template: ./t/templates/include2.incl
->>>> Second included content.
 EOF
 }

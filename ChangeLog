@@ -1,3 +1,168 @@
+2004-01-16 13:26  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.14):
+
+	- Changed version to a constant so I don't have to release for every commit.
+	
+2004-01-16 13:23  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.47), t/foreach.t (2.14),
+	t/templates/foreachtest.tmpl (2.10):
+
+	- Bugfix for invalid $ITERATOR values in nested FOREACH directives. Thanks to
+	  Adam Dowling at Sun for reporting this bug.
+	
+2003-01-16 17:19  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: inherit.t (1.5), templates/inheritChild.tmpl (1.2),
+	templates/inheritGrandchild.tmpl (1.1):
+
+	- Added tests for the 2-level template inheritance bug.
+	
+2003-01-16 16:27  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.46):
+
+	- Fixed clobbering of secondary inherited data for embedded templates when the
+	  middle template uses the inherited field itself. The field was showing up in
+	  the regular content hash, which clobbered inherited fields in
+	  getContentHash().
+	
+2003-01-16 15:51  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.13):
+
+	- Fixed makefile output (of non-dev invocation, anyway) so it works under
+	  non-Gnu make.
+	
+2003-01-16 15:19  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.12):
+
+	- Converted to use ExtUtils::AutoInstall.
+	
+2003-01-16 15:11  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.45):
+
+	- Fixed bug in propagateContent() in pursuit of the multi-level inheritance bug.
+	
+2003-01-15 14:20  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.18):
+
+	- Corrected mode header.
+	
+2003-01-05 10:17  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar/Exceptions.pm (1.9):
+
+	- Fixed broken POD.
+	
+2003-01-05 10:16  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.17):
+
+	- Cleaned up some whitespace and L<> issues.
+	
+2002-12-31 14:08  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: conditional.t (1.12), templates/conditionaltest.tmpl (1.5):
+
+	- Added tests for DEREFing in a conditional.
+	
+2002-12-31 14:07  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.44):
+
+	- Added check for DEREF in conditional.
+	
+2002-12-31 14:07  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.25):
+
+	- Added DEREF capability to IF_tag and ELSIF_tag.
+	
+2002-12-31 11:46  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: conditional.t (1.11), templates/conditionaltest.tmpl (1.4):
+
+	- Added test case for complex conditionals (IF/ELSIF/ELSE).
+	
+2002-12-31 11:45  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.24):
+
+	- Updated ELSIF_tag with the fixes already applied to IF_tag.
+	
+2002-12-30 04:35  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.16):
+
+	- Fixed HTML in the synopsis.
+	
+2002-12-30 04:27  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: methodcall.t (2.6), templates/methodcalltest.tmpl (2.3):
+
+	- Added tests for methodchains with multiple calls of various syntaxes.
+	
+2002-12-30 04:26  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.23):
+
+	- Fixed screwup with the last change to the methodchain rule: forgot to change
+	  the action to reflect changes in the first production.
+	
+2002-12-19 14:16  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: conditional.t (1.10), templates/conditionaltest.tmpl (1.3):
+
+	- Added regression tests for fixes to IF directive.
+	
+2002-12-19 14:05  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.22):
+
+	- Fixed IF directive by re-ordering productions to make the more-specific items
+	  match first.
+	
+	- Removed spurious (s) from methochain production that caused embedded
+	  methodchains to consume other parts of the directive. Eg.,
+	
+		FOREACH PAIR foo IN bar method1.method2 SORT BY_KEY
+	
+	  consumed the SORT and BY_KEY as a part of the methodchain.
+	
+2002-12-13 16:47  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.15):
+
+	- Added docs for the 'CUT' directive.
+	
+2002-12-13 16:44  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.21), lib/Text/Templar.pm (2.43):
+
+	- Added new 'CUT' directive (topwise STOP).
+	
+2002-12-13 16:43  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: cut.t (1.1), templates/cuttest.tmpl (1.1):
+
+	Initial commit.
+	
+2002-12-13 16:42  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: cache.t (2.4), comment.t (2.5), conditional.t (1.9), define.t
+	(2.5), delay.t (2.5), env.t (2.3), erroroutput.t (2.3), eval.t
+	(2.4), foreach.t (2.13), grep.t (2.5), include.t (2.5), inherit.t
+	(1.4), join.t (2.5), map.t (2.5), meta.t (2.4), method.t (2.3),
+	methodcall.t (2.5), query.t (2.3), sort.t (2.5), stop.t (2.3),
+	trim.t (1.4):
+
+	- Turned on autoflush for STDERR, too.
+	
 2002-09-27 08:41  Michael Granger <ged@FaerieMUD.org>
 
 	* lib/Text/Templar.pm (2.42, release_2_42):

@@ -3,12 +3,12 @@
 
 =head1 NAME
 
-Text::Templar::Exceptions - runtime exception classes for Text::Templar
+Text::Templar::Exceptions - runtime exception classes for L<Text::Templar|Text::Templar>
 
 =head1 SYNOPSIS
 
   use Text::Templar::Exceptions qw{:syntax};
-
+  
   my $result = try {
     $t = Text::Templar->new( "main.tmpl" );
   } catch Text::Templar::Exception with {
@@ -26,7 +26,7 @@ B<PROCEDURAL INTERFACE> for more about what they do and how to use them.
 
 =head1 REQUIRES
 
-Perl 5.6, L<Carp>, L<Exporter>
+Perl 5.6, L<Carp|Carp>, L<Exporter|Exporter>
 
 =head1 DESCRIPTION
 
@@ -105,16 +105,16 @@ For example:
   try {
 	somethingDangerous();
   }
-
+  
   # Handle IO errors
   catch Exception::IOError with {
 	<do something>
   }
-
+  
   # Build a handler for other errors
   except {
 	my $handler = sub { print STDERR shift()->message };
-
+    
 	return {
 		Exception::Custom1	=> $handler,
 		Exception::Custom2	=> $handler,
@@ -140,6 +140,8 @@ be caught, the C<finally> block will be executed and the exception will be re-th
 
 Only one C<finally> block may be specified per C<try> block. Additional ones will
 result in a syntax error.
+
+=back
 
 =head2 The Base Exception Class
 
@@ -255,6 +257,8 @@ If this exception is thrown with two arguments, and the first argument is a
 integer number, an error message is built of the form: "Missing or undefined
 argument C<$_[0]>: C<$_[1]>".
 
+=back
+
 =head1 TODO
 
 =over 4
@@ -267,7 +271,7 @@ Make it possible to turn off stacktraces for speed with the C<$Exception::TERSE>
 
 =head1 RCSID
 
-$Id: Exceptions.pm,v 1.8 2002/08/08 15:57:58 deveiant Exp $
+$Id: Exceptions.pm,v 1.9 2003/01/05 17:17:21 deveiant Exp $
 
 =head1 AUTHOR
 
@@ -323,8 +327,8 @@ BEGIN {
 
 	### Package constants
 	use vars		qw{$VERSION $RCSID @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $AUTOLOAD};
-	$VERSION = do { my @r = (q$Revision: 1.8 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-	$RCSID			= q$Id: Exceptions.pm,v 1.8 2002/08/08 15:57:58 deveiant Exp $;
+	$VERSION = do { my @r = (q$Revision: 1.9 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+	$RCSID			= q$Id: Exceptions.pm,v 1.9 2003/01/05 17:17:21 deveiant Exp $;
 
 	### Superclass
 	use base		qw{Exporter};

@@ -8,16 +8,23 @@ sub new {
 	return bless { value => $value  }, $class
 }
 
+sub obj { $_[0] }
+
 sub testMethod {
 	my $self = shift;
 	return $self->{value};
 }
 
+sub testMethod2 {
+	my $self = shift;
+	return $self->{value};
+}
 
 package methodcall_test;
 
 BEGIN {
-	$| = 1;
+    select(STDERR); $| = 1;	# make unbuffered
+    select(STDOUT); $| = 1;	# make unbuffered
 	use Text::Templar	qw{};
 	use Text::Templar::Exceptions		qw{:syntax};
 }
@@ -26,12 +33,13 @@ BEGIN {
 
 my $obj1 = new testObject 'object 1';
 my $obj2 = new testObject 'object 2';
+my $obj3 = new testObject $obj2;
 
 my $t = new Text::Templar 
 	includePath => [ './t/templates' ]
 	or print( "1..0\n" ), exit 0;
 
-my $numTests = 6;
+my $numTests = 7;
 my $numTest = 0;
 
 print "1..$numTests\n";
@@ -62,9 +70,13 @@ Test( $t->test4($objectHash) );
 my $arrayRef = [ "first", "second" ];
 Test( $t->test5($arrayRef) );
 
+### 6: Methodchain
+Test( $t->test6($obj3) );
+
 #print STDERR $t->render;
 
-Test( $t->render eq test4results() );
+my $outputRe = resultsPattern();
+Test( $t->render =~ $outputRe );
 
 sub Test {
     my $result = shift;
@@ -72,8 +84,8 @@ sub Test {
     $result;
 }
 
-sub test4results {
-	return <<"EOF";
+sub resultsPattern {
+	my $pat = quotemeta(<<"EOF");
 Test 2: object 1
 Test 3: object 2
 
@@ -82,5 +94,11 @@ Test 4: object 1
 Test 5: first
 Test 5: second
 
+Test 6: object 2
+Test 6: object 2
+Test 6: object 2
+Test 6: object 2
 EOF
+
+	return qr{$pat};
 }

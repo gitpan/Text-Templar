@@ -28,7 +28,8 @@ sub hash { %{shift()->{hash}} }
 ### Test package
 package joinTest;
 BEGIN {
-	$| = 1;
+    select(STDERR); $| = 1;	# make unbuffered
+    select(STDOUT); $| = 1;	# make unbuffered
 
 	use Text::Templar	qw{};
 	use Text::Templar::Exceptions		qw{:syntax};

@@ -5,7 +5,7 @@ package testObject;
 sub new {
 	my $class = shift;
 	my $value = shift;
-	return bless { value => $value  }, $class
+	return bless { value => $value	}, $class
 }
 
 sub testArrayMethod {
@@ -33,23 +33,24 @@ sub hash { %{shift()->{hash}} }
 
 package foreachTest;
 BEGIN {
-	$| = 1;
+	select(STDERR); $| = 1; # make unbuffered
+	select(STDOUT); $| = 1; # make unbuffered
 	use Text::Templar	qw{};
 	use Text::Templar::Exceptions		qw{:syntax};
 }
 
 $SIG{__DIE__} = sub { my $e = shift; print STDERR $e->stringify if ref $e };
 
-my $t = new Text::Templar 
+my $t = new Text::Templar
 	includePath => [ './t/templates' ]
 	or print( "1..0\n" ), exit 0;
 
-my $numTests = 24;
+my $numTests = 25;
 my $numTest = 0;
 
 print "1..$numTests\n";
 
-###	1: Load template
+### 1: Load template
 Test(
 	 try {
 		 $t->load("foreachtest.tmpl")
@@ -73,6 +74,11 @@ Test( $t->testSugarList(@testList) );
 my @testObjects = ();
 for my $num ( 0 .. 4 ) {
 	push @testObjects, new testObject "testValue #$num";
+}
+
+my @testObjectArrays = ();
+for my $num ( 0 .. 3 ) {
+	push @testObjectArrays, \@testObjects;
 }
 
 ### 4: Add an object to test the methodchain iterator
@@ -135,9 +141,12 @@ Test( $t->testCustomSortedHashrefIterObject( $hashTestObj ) );
 ### 23: Test localized interator variable
 Test( $t->testLocalizedIterator(@testObjects) );
 
+### 24: Nested iterators' $ITERATION
+Test( $t->testNestedIterator(@testObjectArrays) );
+
 #print STDERR $t->render;
 
-### 24: Render
+### 25: Render
 my $resultPattern = ResultPattern();
 Test( $t->render =~ $resultPattern );
 
@@ -145,9 +154,9 @@ Test( $t->render =~ $resultPattern );
 
 
 sub Test {
-    my $result = shift;
-    printf("%sok %d\n", ($result ? "" : "not "), ++$numTest);
-    $result;
+	my $result = shift;
+	printf("%sok %d\n", ($result ? "" : "not "), ++$numTest);
+	$result;
 }
 
 sub ResultPattern {qr{List start:
@@ -355,5 +364,39 @@ Iterator local variable bug test:
 \s+>>> testValue #2
 \s+>>> testValue #4
 ----------------------------------------------------------------------
-Iterator local variable bug test end\.}s
+Iterator local variable bug test end\.
+
+Nested iterator \$ITERATOR bug:
+----------------------------------------------------------------------
+outer>>> 1
+\s+inner>>> 1
+\s+inner>>> 2
+\s+inner>>> 3
+\s+inner>>> 4
+\s+inner>>> 5
+outer<<< 1
+outer>>> 2
+\s+inner>>> 1
+\s+inner>>> 2
+\s+inner>>> 3
+\s+inner>>> 4
+\s+inner>>> 5
+outer<<< 2
+outer>>> 3
+\s+inner>>> 1
+\s+inner>>> 2
+\s+inner>>> 3
+\s+inner>>> 4
+\s+inner>>> 5
+outer<<< 3
+outer>>> 4
+\s+inner>>> 1
+\s+inner>>> 2
+\s+inner>>> 3
+\s+inner>>> 4
+\s+inner>>> 5
+outer<<< 4
+----------------------------------------------------------------------
+Nested iterator \$ITERATOR bug test end\.}s
+
 }

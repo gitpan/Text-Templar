@@ -15,12 +15,53 @@ Compound conditional test:
 <% END IF %>
 --------------------------------------------------
 
+Match conditional test:
+--------------------------------------------------
+<% IF matchConditional MATCHES /yep/ %>
+    Condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Negative match conditional test:
+--------------------------------------------------
+<% IF matchConditional MATCHES /nope/ %>
+    Condition failed.
+<% END IF %>
+--------------------------------------------------
+
+Match conditional test 2:
+--------------------------------------------------
+<% IF matchConditional =~ /yep/ %>
+    Condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Negative match conditional test 2:
+--------------------------------------------------
+<% IF matchConditional =~ /nope/ %>
+    Condition failed.
+<% END IF %>
+--------------------------------------------------
+
 Complex conditional test:
 --------------------------------------------------
 <% IF complexConditional %>
     Condition failed.
 <% ELSIF otherComplexConditional %>
     Other condition passed.
+<% ELSE %>
+    Condition failed.
+<% END IF %>
+--------------------------------------------------
+
+Complex match conditional test:
+--------------------------------------------------
+<% IF matchConditional MATCHES /nope/ %>
+    Condition failed.
+<% ELSIF matchConditional MATCHES /yes/ %>
+    Condition failed.
+<% ELSIF matchConditional MATCHES /yep/ %>
+    Condition matched.
 <% ELSE %>
     Condition failed.
 <% END IF %>
@@ -71,6 +112,20 @@ Methodcall + Regexp matchspec conditional failure test:
 <% END IF %>
 --------------------------------------------------
 
+Methodcall + Regexp matchspec conditional test:
+--------------------------------------------------
+<% IF conditionalObject testMethod =~ /(?i)y/ %>
+    Regexp condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Methodcall + Regexp matchspec conditional failure test:
+--------------------------------------------------
+<% IF conditionalObject testMethod =~ /(?i)n/ %>
+    Regexp conditional failure failed.
+<% END IF %>
+--------------------------------------------------
+
 Methodcall + Array matchspec conditional test:
 --------------------------------------------------
 <% IF conditionalObject testMethod [ 'yep' ] %>
@@ -81,6 +136,20 @@ Methodcall + Array matchspec conditional test:
 Methodcall + Array matchspec conditional failure test:
 --------------------------------------------------
 <% IF conditionalObject testMethod [ 'nope' ] %>
+    Array condition failure failed.
+<% END IF %>
+--------------------------------------------------
+
+Methodcall + Array matchspec conditional test:
+--------------------------------------------------
+<% IF conditionalObject testMethod MATCHES [ 'yep' ] %>
+    Array condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Methodcall + Array matchspec conditional failure test:
+--------------------------------------------------
+<% IF conditionalObject testMethod MATCHES [ 'nope' ] %>
     Array condition failure failed.
 <% END IF %>
 --------------------------------------------------
@@ -96,6 +165,34 @@ Methodcall + Hash matchspec conditional failure test:
 --------------------------------------------------
 <% IF conditionalObject testMethod { 'nope' => 1 } %>
     Condition failure failed.
+<% END IF %>
+--------------------------------------------------
+
+Methodcall + Hash matchspec conditional test:
+--------------------------------------------------
+<% IF conditionalObject testMethod MATCHES { 'yep' => 1 } %>
+    Condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Methodcall + Hash matchspec conditional failure test:
+--------------------------------------------------
+<% IF conditionalObject testMethod MATCHES { 'nope' => 1 } %>
+    Condition failure failed.
+<% END IF %>
+--------------------------------------------------
+
+Match methodcall with deref:
+--------------------------------------------------
+<% IF DEREF conditionalDerefObject testMethod MATCHES /yep/ %>
+    Condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Match methodcall with deref2:
+--------------------------------------------------
+<% IF DEREF conditionalDerefObject testMethod =~ /nope/ %>
+    Condition failed.
 <% END IF %>
 --------------------------------------------------
 
