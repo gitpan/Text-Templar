@@ -45,26 +45,26 @@ Test( $t->condition(1) );
 ### 3: Compound conditional
 Test( $t->compoundConditional(undef) || 1 );
 
-### 4: Complex conditionals
+### 4,5: Complex conditionals
 Test( $t->complexConditional(0) || 1 );
 Test( $t->otherComplexConditional(1) );
 
-### 5: Nested conditional
+### 6,7: Nested conditional
 Test( $t->outerConditional(1) );
 Test( $t->innerConditional(0) || 1 );
 
-### 5: Nested conditional
+### 8,9: Nested conditional
 Test( $t->unreachedOuterConditional(0) || 1 );
 Test( $t->unreachedInnerConditional(1) );
 
 my $o = new testObject 'yep';
 
-### 6: Methodcall conditional
+### 10: Methodcall conditional
 Test( $t->conditionalObject($o) );
 
 #print STDERR $t->render;
 
-### 7: Render
+### 11: Render
 Test( $t->render eq renderResults() );
 
 

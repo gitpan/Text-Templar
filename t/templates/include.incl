@@ -1,3 +1,4 @@
 
+Template: <% EVAL $TEMPLATE_PATH %>
 >> This is the first included template: Here's another:
 <% INCLUDE include2.incl %>

@@ -2,12 +2,12 @@
 ################################################################################
 #
 #  Text::Templar
-#  $Id: Templar.pm,v 2.37 2001/12/31 21:29:31 deveiant Exp $
+#  $Id: Templar.pm,v 2.40 2002/08/08 15:55:57 deveiant Exp $
 #
 #  Authors: Michael Granger <ged@FaerieMUD.org>
 #  and Dave McCorkhill <scotus@FaerieMUD.org>
 #
-#  Copyright (c) 1998-2001 Michael Granger and The FaerieMUD Consortium. All
+#  Copyright (c) 1998-2002 Michael Granger and The FaerieMUD Consortium. All
 #  rights reserved.
 #
 #  This module is free software. You may use, modify, and/or redistribute this
@@ -30,12 +30,16 @@ use warnings;
 #    I N I T I A L I Z A T I O N
 ################################################################################
 BEGIN {
-	require v5.6;
+	require 5.006;
 
 	###	Package globals
 	use vars	qw{$VERSION $RCSID $AUTOLOAD};
-    $VERSION	= do { my @r = (q$Revision: 2.37 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-	$RCSID		= q$Id: Templar.pm,v 2.37 2001/12/31 21:29:31 deveiant Exp $;
+    $VERSION	= do { my @r = (q$Revision: 2.40 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+	$RCSID		= q$Id: Templar.pm,v 2.40 2002/08/08 15:55:57 deveiant Exp $;
+
+	### Some constants to make things more human-readable
+	use constant	TRUE	=> 1;
+	use constant	FALSE	=> ();
 
 	### Prototypes for overridden methods (These don't work now for some strange
 	### reason I haven't yet figured out.)
@@ -73,7 +77,6 @@ BEGIN {
 
 		_tailedErrors		=> [],				# Storage for exceptions
 	  	_parsed				=> 0,				# Has the template been parsed yet?
-		_depth				=> 0,				# Current depth of recursion
 		_errorOutputFh		=> '',				# Error output filehandle
 
 	  ### 'Private' attributes
@@ -105,67 +108,66 @@ BEGIN {
 
 ### METHOD: undefinedValue( $newValue )
 ### Get/set the value that is inserted when templar encounters an undefined
-###		value. Defaults to the empty string.
+### value. Defaults to the empty string.
 
 
 ###	METHOD: maxIncludeDepth( $depth )
 ### Get/set the maximum include depth. If the number of recursive includes for a
-###		given template exceeds this value, an exception is generated and the
-###		include will fail. The default value is 15. (Translucent method)
+### given template exceeds this value, an exception is generated and the
+### include will fail. The default value is 15. (Translucent method)
 
 
 ###	METHOD: commentOpen( $string )
 ### Get/set the comment open string used when rendering comments into the
-###		output. Defaults to 'C<E<lt>!-- >', which is the HTML comment open
-###		string. (Translucent method)
+### output. Defaults to 'C<E<lt>!-- >', which is the HTML comment open
+### string. (Translucent method)
 
 
 ###	METHOD: commentClose( $string )
 ### Get/set the comment close string used when rendering comments into the
-###		output. Defaults to 'C< --E<gt>>', which is the HTML comment close
-###		string.
+### output. Defaults to 'C< --E<gt>>', which is the HTML comment close
+### string.
 
 
 ###	METHOD: missingMethodIsFatal( $boolean )
 ### Get/set the flag that controls what happens when a method is called on the
-###		template which hasn't been defined in the template file. If this is set
-###		to a false value (which is the default), the call won't do anything. If
-###		it is set to a true value, a call to an undefined method will throw an
-###		exception.
+### template which hasn't been defined in the template file. If this is set
+### to a false value (which is the default), the call won't do anything. If
+### it is set to a true value, a call to an undefined method will throw an
+### exception.
 
 
 ###	METHOD: cacheSource( $boolean )
 ### Get/set the attribute which turns source caching on or off. If this is set
-###		to a true value, the template source from any file will be cached after
-###		loading it the first time, and will be reused the next time the template
-###		is requested. If the file the source is from changes, the caching
-###		mechanism will notice and abandon the cached source. (Translucent method)
+### to a true value, the template source from any file will be cached after
+### loading it the first time, and will be reused the next time the template
+### is requested. If the file the source is from changes, the caching
+### mechanism will notice and abandon the cached source. (Translucent method)
 
 
 ###	METHOD: cacheTrees( $boolean )
 ### Get/set the attribute which turns syntax tree caching on or off. If this is
-###		set to a true value, the template object's syntax tree will be reused
-###		the next time it is loaded, skipping the parse phase altogether. Note
-###		that time-sensitive C<EVAL>s and the like will need to be placed into
-###		C<DELAYED> blocks if you are caching trees. (Translucent method)
+### set to a true value, the template object's syntax tree will be reused the
+### next time it is loaded, skipping the parse phase altogether. (Translucent
+### method)
 
 
 ###	METHOD: sourceName( $pathname )
 ### Get/set the path name of the source file the template was/should be loaded
-###		from. Note that changing this value after loading a template will not
-###		have any effect on the actual template content. Setting this value
-###		before calling C<load()> will cause the template source to be loaded
-###		from the specified file. (Translucent method)
+### from. Note that changing this value after loading a template will not
+### have any effect on the actual template content. Setting this value
+### before calling C<load()> will cause the template source to be loaded
+### from the specified file. (Translucent method)
 
 
 ###	METHOD: syntaxTree( \@syntaxTree=Text::Templar::node )
 ### Get/set the syntaxTree that the object uses in rendering. By getting/setting
-###		this attribute, you can prune elements out of the rendered
-###		content. (Translucent method)
+### this attribute, you can prune elements out of the rendered
+### content. (Translucent method)
 
 ###	METHOD: pushSyntaxTree( @nodes=Text::Templar::node )
 ### Add the specified nodes on to the end of the syntax tree. Returns the total
-###		number of nodes after adding. (Translucent method)
+### number of nodes after adding. (Translucent method)
 
 
 ###	METHOD: popSyntaxTree( undef )
@@ -178,30 +180,29 @@ BEGIN {
 
 ###	METHOD: unshiftSyntaxTree( @args )
 ### Add the specified nodes onto the top of the syntax tree. Returns the number
-###		of nodes in the tree after adding. (Translucent method)
+### of nodes in the tree after adding. (Translucent method)
 
 
-### METHOD: spliceSyntaxTree( $offset,
-###		$length,@newnodes=Text::Templar::node )
+### METHOD: spliceSyntaxTree( $offset, $length, @newnodes=Text::Templar::node )
 ### Removes the nodes specified by offset and length from the syntax tree,
-###		replacing them with the new nodes, if specified. This method works
-###		similarly to Perl's C<splice()>. (Translucent method)
+### replacing them with the new nodes, if specified. This method works
+### similarly to Perl's C<splice()>. (Translucent method)
 
 
 ###	METHOD: sliceSyntaxTree( @indexes )
 ### Return the syntax tree nodes specified by the indexes from the syntax tree
-###		without removing them. (Translucent method)
+### without removing them. (Translucent method)
 
 
 ### METHOD: includePath( \@newPath )
 ### Get/set the list of directories to check when searching for template
-###		files. The path is a reference to an array of directories.  (Translucent
-###		method)
+### files. The path is a reference to an array of directories.  (Translucent
+### method)
 
 
 ###	METHOD: pushIncludePath( @directories )
 ### Add the specified directories on to the end of the include path. Returns the
-###		total number of paths after adding. (Translucent method)
+### total number of paths after adding. (Translucent method)
 
 
 ###	METHOD: popIncludePath( undef )
@@ -210,35 +211,35 @@ BEGIN {
 
 ###	METHOD: shiftIncludePath( undef )
 ### Remove and return the first element of the template include
-###		path. (Translucent method)
+### path. (Translucent method)
 
 
 ###	METHOD: unshiftIncludePath( @directories )
 ### Add the specified directories onto the beginning of the include
-###		path. Returns the number of directories in the tree after
-###		adding. (Translucent method)
+### path. Returns the number of directories in the tree after
+### adding. (Translucent method)
 
 
 ### METHOD: spliceIncludePath( $offset, $length, @newDirs )
 ### Removes the directories specified by offset and length from the include
-###		path, replacing them with the new directories, if specified. This method
-###		works similarly to Perl's C<splice()>. (Translucent method)
+### path, replacing them with the new directories, if specified. This method
+### works similarly to Perl's C<splice()>. (Translucent method)
 
 
 ###	METHOD: sliceIncludePath( @indexes )
 ### Returns the directories specified by the indexes from the include path
-###		without removing them from the path. (Translucent method)
+### without removing them from the path. (Translucent method)
 
 
 ###	METHOD: queries( \@queryNodes=Text::Templar::QUERY )
 ### Get/set the array of query nodes for this template. Query nodes are
-###		generated for C<QUERY> directives in the template. See X<NODE OBJECTS>
-###		for more about how to use C<QUERY> nodes. (Translucent method)
+### generated for C<QUERY> directives in the template. See X<NODE OBJECTS>
+### for more about how to use C<QUERY> nodes. (Translucent method)
 
 
 ###	METHOD: pushQueries( @nodes=Text::Templar::QUERY )
 ### Add the specified nodes on to the end of the query list. Returns the total
-###		number of nodes after adding. (Translucent method)
+### number of nodes after adding. (Translucent method)
 
 
 ###	METHOD: popQueries( undef )
@@ -251,28 +252,28 @@ BEGIN {
 
 ###	METHOD: unshiftQueries( @queries=Text::Templar::QUERY )
 ### Add the specified nodes onto the top of the query list. Returns the number
-###		of nodes in the list after adding. (Translucent method)
+### of nodes in the list after adding. (Translucent method)
 
 
 ### METHOD: spliceQueries( $offset, $length, @newnodes=Text::Templar::QUERY )
 ### Removes the nodes specified by offset and length from the query list,
-###		replacing them with the new nodes, if specified. This method works
-###		similarly to Perl's C<splice()>. (Translucent method)
+### replacing them with the new nodes, if specified. This method works
+### similarly to Perl's C<splice()>. (Translucent method)
 
 
 ###	METHOD: sliceQueries( @indexes )
 ### Return the query list nodes specified by the indexes from the query list
-###		without removing them. (Translucent method)
+### without removing them. (Translucent method)
 
 
 ###	METHOD: metafields( \%newFields )
 ###	Get/set the hash of metadata associated with the template. (Translucent
-###		method)
+### method)
 
 
 ###	METHOD: setMetafields( %fieldPairs )
 ###	Set the value of the metadata field specified to the specified
-###		value. (Translucent method)
+### value. (Translucent method)
 
 
 ###	METHOD: getMetafields( @fieldNames )
@@ -281,23 +282,23 @@ BEGIN {
 
 ###	METHOD: deleteMetafields( @fieldNames )
 ### Remove and return the named values from the object's metafields hash.
-###		 (Translucent method)
+### (Translucent method)
 
 ###	METHOD: defines( \%variableDefinitions )
 ### Get/set the template variables associated with the template. The defines
-###		hash is a hash of variable name =E<gt> variable value pairs. These
-###		variables will be visible to any code evaluated in the template's
-###		scope. If a variable does not have a perl-style variable prefix, it is
-###		assumed to be a scalar value.  (Translucent method)
+### hash is a hash of variable name =E<gt> variable value pairs. These
+### variables will be visible to any code evaluated in the template's
+### scope. If a variable does not have a perl-style variable prefix, it is
+### assumed to be a scalar value.  (Translucent method)
 
 
 ###	METHOD: setDefines( %variablePairs )
 ### Set the value of the specified variable pairs in the template definitions
-###		 hash (Translucent method)
+### hash (Translucent method)
 
 ###	METHOD: deleteDefines( @variableNames )
 ### Remove and return the specified key-value pairs from the template
-###		definitions hash. (Translucent method)
+### definitions hash. (Translucent method)
 
 
 ###	(PROTECTED STATIC) METHOD: _Parser( $newParser=Text::Templar::Parser )
@@ -306,45 +307,45 @@ BEGIN {
 
 ###	(PROTECTED) METHOD: _tailedErrors( \@exceptions=Text::Templar::Exception )
 ###	Get/set the array of exception objects to be appended to the end of the
-###		rendered output. (Translucent method)
+### rendered output. (Translucent method)
 
 
 ###	(PROTECTED) METHOD: _pushTailedErrors( @exceptions=Text::Templar::Exception )
 ###	Add the specified exceptions on to the end of the tailed error list. Returns the
-###		total number of exceptions after adding. (Translucent method)
+### total number of exceptions after adding. (Translucent method)
 
 
 ###	(PROTECTED) METHOD: _popTailedErrors( undef )
 ###	Remove and return the last exception from the tailed exception
-###		list. (Translucent method)
+### list. (Translucent method)
 
 
 ###	(PROTECTED) METHOD: _shiftTailedErrors( undef )
 ### Remove and return the first element of the tailed exception list.
-###		(Translucent method)
+### (Translucent method)
 
 
 ### (PROTECTED) METHOD: _unshiftTailedErrors( @exceptions=Text::Templar::Exception )
 ### Add the specified exceptions onto the top of the tailed exception
-###		 list. Returns the number of exceptions in the list after adding.
-###		 (Translucent method)
+### list. Returns the number of exceptions in the list after adding.
+### (Translucent method)
 
 
 ### (PROTECTED) METHOD: _spliceTailedErrors( $offset, $length, @exceptions=Text::Templar::Exception )
 ### Removes the exceptions specified by offset and length from the tailed
-###		exceptions list, replacing them with the new exceptions, if
-###		specified. This method works similarly to Perl's
-###		C<splice()>. (Translucent method)
+### exceptions list, replacing them with the new exceptions, if
+### specified. This method works similarly to Perl's
+### C<splice()>. (Translucent method)
 
 
 ### (PROTECTED) METHOD: _sliceTailedErrors( @indexes )
 ### Return the query list exceptions specified by the indexes from the tailed
-###		exceptions list without removing them. (Translucent method)
+### exceptions list without removing them. (Translucent method)
 
 
 ###	(PROTECTED) METHOD: _parsed( @args )
 ###	Get/set the flag that designates the template object as parsed. (Translucent
-###		method)
+### method)
 
 
 ###	(PROTECTED) METHOD: _depth( @args )
@@ -353,18 +354,18 @@ BEGIN {
 
 ###	(PROTECTED) METHOD: _errorOutputFh( @args )
 ### Get/set the output filehandle that should be used for printing exceptions as
-###		they occur, if any. See C<errorOutput()> for more info. (Translucent
-###		method)
+### they occur, if any. See C<errorOutput()> for more info. (Translucent
+### method)
 
 
 ###	(PRIVATE) METHOD: __closureCount( @args )
 ###	Get/set the number of closures that have been constructed. This is used for
-###		constructing a unique namespace for each closure. (Translucent method)
+### constructing a unique namespace for each closure. (Translucent method)
 
 
 ###	(PRIVATE STATIC) METHOD: __ErroutIsInitialized( @args )
 ### Get/set the flag that denotes that the error output filehandle has been
-###		 initialized.  (Translucent method)
+### initialized.  (Translucent method)
 
 
 ###	(PRIVATE READONLY) METHOD: __VERSION( @args )
@@ -377,9 +378,9 @@ BEGIN {
 
 
 
-###############################################################################
-###  P A C K A G E   G L O B A L S
-###############################################################################
+#####################################################################
+###	P A C K A G E   G L O B A L S
+#####################################################################
 use vars qw{%CachedSource %CachedTree};
 
 ### Cached template contents and syntax trees
@@ -394,9 +395,9 @@ use vars qw{%CachedSource %CachedTree};
 
 ### (CONSTRUCTOR) METHOD: new( [ $sourceFileName | \@sourceArray ][, %configHash] )
 ### Constructs and returns a new template object. If the optional sourceFileName
-###		or sourceArray argument is specified, the template content is parsed. If
-###		the optional configHash contains any key-value pairs, the per-object
-###		attributes specified are set. Throws an exception on any error.
+### or sourceArray argument is specified, the template content is parsed. If
+### the optional configHash contains any key-value pairs, the per-object
+### attributes specified are set. Throws an exception on any error.
 sub new {
 	my $proto = shift or throw Text::Templar::Exception::MethodError;
 	my $class = ref $proto || $proto;
@@ -408,6 +409,7 @@ sub new {
 	my $self = $class->SUPER::new( @_ );
 	$self->{content} = {};
 	$self->{inheritedContent} = {};
+	$self->{_depth} = 0;
 
 	# :FIXME: This is a kluge to work around the error output filehandle not
 	# being opened if the config isn't specified by the constructor. Better
@@ -430,6 +432,7 @@ sub clear {
 
 	$self->{content} = {};
 	$self->{inheritedContent} = {};
+	$self->{defines} = {};
 	$self->{_tailedErrors} = [];
 }
 
@@ -441,17 +444,18 @@ OVERRIDE: {
 
 ### METHOD: errorOutput( $outputConfig )
 ### Get/set the errorOutput attribute. This attribute controls where the output
-###		from errors generated in the template object end up. Setting it to
-###		'C<stderr>' (the default) causes errors to be output on STDERR. Setting
-###		it to 'C<inline>' renders the errors as comments (see C<commentOpen()>
-###		and C<commentClose()>) into the output of the template at the place
-###		where they occur. If C<errorOutput()> is 'C<tailed>', the errors will be
-###		rendered as above, but they will occur at the end of the template's
-###		output. Setting C<errorOutput()> to 'C<ignore>' will cause errors to be
-###		ignored silently. Any other value is treated as the filename of some
-###		sort of log, and errors are piped to it as they occur. Setting this to a
-###		filename which cannot be opened results in a fatal exception being
-###		thrown. (Translucent method)
+### from errors generated in the template object end up. Setting it to
+### 'C<stderr>' (the default) causes errors to be output on STDERR. Setting it
+### to 'C<inline>' renders the errors as comments (see C<commentOpen()> and
+### C<commentClose()>) into the output of the template at the place where they
+### occur. If C<errorOutput()> is 'C<tailed>', the errors will be rendered as
+### more-detailed error stacktraces at the end of the template's output. A value
+### of 'C<both>' means to use both C<inline> and C<tailed> output types. Setting
+### C<errorOutput()> to 'C<ignore>' will cause errors to be ignored
+### silently. Any other value is treated as the filename of some sort of log,
+### and errors are piped to it as they occur. Setting this to a filename which
+### cannot be opened results in a fatal exception being thrown. (Translucent
+### method)
 	sub errorOutput {
 		my $self = shift			or throw Text::Templar::Exception::MethodError;
 		my $errorOutput = shift;
@@ -466,7 +470,8 @@ OVERRIDE: {
 				$ofh = $self->_getStderrHandle
 					or throw Text::Templar::Exception "Unknown error while trying to get STDERR handle";
 			} elsif ( lc $errorOutput eq q{inline}
-					  || lc $errorOutput eq q{tail}
+					  || lc $errorOutput eq q{tailed}
+					  || lc $errorOutput eq q{both}
 					  || lc $errorOutput eq q{ignore} )
 				{
 					$ofh = undef;
@@ -483,10 +488,10 @@ OVERRIDE: {
 	}
 
 
-	### (OVERRIDDEN) METHOD: getDefines( @defineNames )
-	### Get the evaluated values of the defines specified. Returns the values if
-	###		called in list context, and the number of defines returned in scalar
-	###		context. Throw an exception on any error.
+### METHOD: getDefines( @defineNames )
+### Get the evaluated values of the defines specified. Returns the values if
+### called in list context, and the number of defines returned in scalar
+### context. Throw an exception on any error.
 	sub getDefines {
 		my $self = shift	or throw Text::Templar::Exception::MethodError;
 		my @keys = @_		or return ();
@@ -506,7 +511,7 @@ OVERRIDE: {
 
 ### (PROXY) METHOD: AUTOLOAD( @args )
 ### Handles method calls for the phases we don't have explicit handlers for, and
-###		client calls to directive methods.
+### client calls to directive methods.
 sub AUTOLOAD {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my @args = @_;
@@ -520,9 +525,8 @@ sub AUTOLOAD {
 	### Chop off the package part of the method name
 	( $method = $AUTOLOAD ) =~ s{.*::}{};
 
-	### Build a regexp to match node-handlers for all the phases we grok, and
-	### check the method to see if it's one of them. If it is, we return the
-	### first argument (should be the node to process)
+	### Handle missing node handlers as gracefully as we can. This just returns
+	### the node in question (ie., no-op).
 	return $args[0] if $method =~ m{^(?:preprocess|render)[A-Z]+$};
 
 	### Attempt to get a container for a node by the same name as the method
@@ -540,7 +544,7 @@ sub AUTOLOAD {
 
 ### METHOD: getNodeContent( $nodeName )
 ### Get the content given by the user for the specified node, if any. Returns
-###		the list of content, or throws an exception on any error.
+### the list of content, or throws an exception on any error.
 sub getNodeContent {
 	my $self = shift		or throw Text::Templar::Exception::MethodError;
 	my $nodeName = shift	or throw Text::Templar::Exception::ParamError 1, "node name";
@@ -560,7 +564,7 @@ sub getNodeContent {
 
 ### METHOD: addNodeContent( $nodeName, @contents )
 ### Add elements to the contents of the node specified. Returns the number of
-###		elements after adding the ones given. Throws an exception on any error.
+### elements after adding the ones given. Throws an exception on any error.
 sub addNodeContent {
 	my $self = shift		or throw Text::Templar::Exception::MethodError;
 	my $nodeName = shift	or throw Text::Templar::Exception::ParamError 1, "node name";
@@ -577,7 +581,7 @@ sub addNodeContent {
 
 ### METHOD: setNodeContent( $nodeName, @contents )
 ### Set the contents of the node specified to the given contents. Returns the
-###		number of elements after setting. Throws an exception on any error.
+### number of elements after setting. Throws an exception on any error.
 sub setNodeContent {
 	my $self = shift		or throw Text::Templar::Exception::MethodError;
 	my $nodeName = shift	or throw Text::Templar::Exception::ParamError 1, "node name";
@@ -591,8 +595,8 @@ sub setNodeContent {
 
 ### METHOD: addContentNode( $nodeName )
 ### Add a content container for the node specified if it doesn't already
-###		exist. Returns a true value on success, and throws an exception on any
-###		error.
+### exist. Returns a true value on success, and throws an exception on any
+### error.
 sub addContentNode {
 	my $self = shift		or throw Text::Templar::Exception::MethodError;
 	my $nodeName = shift	or throw Text::Templar::Exception::ParamError 1, "node name";
@@ -604,8 +608,8 @@ sub addContentNode {
 
 ### METHOD: addInheritedNode( $nodeName )
 ### Add an inherited content container for the node specified if it doesn't
-###		already exist. Returns a true value on success, and throws an exception
-###		on any error.
+### already exist. Returns a true value on success, and throws an exception
+### on any error.
 sub addInheritedNode {
 	my $self = shift		or throw Text::Templar::Exception::MethodError;
 	my $nodeName = shift	or throw Text::Templar::Exception::ParamError 1, "node name";
@@ -617,8 +621,8 @@ sub addInheritedNode {
 
 ### METHOD: propagateContent( \%contentHash )
 ### Add the key/value pairs from the given hash to this template's content if
-###		the key has been specified as one that should be inherited. Returns the
-###		number of content pairs propagated, or throws an exception on any error.
+### the key has been specified as one that should be inherited. Returns the
+### number of content pairs propagated, or throws an exception on any error.
 sub propagateContent {
 	my $self = shift		or throw Text::Templar::Exception::MethodError;
 	my $contentHash = shift	or throw Text::Templar::Exception::ParamError 1, "content hash";
@@ -636,7 +640,7 @@ sub propagateContent {
 
 ### METHOD: getContentHash( undef )
 ###	Returns a hash of content that is the result of merging this template's
-###		content and any content inherited from containing templates
+### content and any content inherited from containing templates
 sub getContentHash {
 	my $self = shift		or throw Text::Templar::Exception::MethodError;
 
@@ -652,8 +656,8 @@ sub getContentHash {
 
 ### METHOD: load( $sourceFileName | \@sourceArray )
 ### Load template data from a file or arrayref, parse it, and create the
-###		object's structure by examining the resulting syntax tree. Returns a
-###		true value if all goes well, or throws an exception on any error.
+### object's structure by examining the resulting syntax tree. Returns a
+### true value if all goes well, or throws an exception on any error.
 sub load {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $source = shift	or throw Text::Templar::Exception::ParamError 1, "source array or filename";
@@ -686,9 +690,9 @@ sub load {
 
 ### METHOD: parse( $sourcePath | \@sourceArray )
 ### Given an absolute path to a template, or an arrayref of template content,
-###		create an initial syntax tree and preprocess it to create the object
-###		attributes necessary to interact with the template. Returns a processed
-###		syntax tree.
+### create an initial syntax tree and preprocess it to create the object
+### attributes necessary to interact with the template. Returns a processed
+### syntax tree.
 sub parse {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $source = shift	or throw Text::Templar::Exception::ParamError 1, "template source array or pathname";
@@ -722,14 +726,18 @@ sub render {
 		@output,
 	   );
 
-	### Get the tree up until the 'STOP' node
+	# Get the tree up until the 'STOP' node
 	$tree = $self->syntaxTree;
 
-	### Filter the tree through the rendering methods, and return the rendered
-	### tree
+	# Render the AST
 	@output = $self->filterSyntaxTree( $tree, 'render' );
-	push @output, map { $self->_buildComment($_) . "\n\n" } @{$self->_tailedErrors}
-		if @{$self->_tailedErrors};
+
+	# If we're at the top level, append any tailed errors
+	if ( $self->{_depth} == 0 ) {
+		#push @output, "<!-- Depth is $self->{_depth} -->";
+		push @output, map { $self->_buildComment($_) . "\n\n" } @{$self->_tailedErrors}
+			if @{$self->_tailedErrors};
+	}
 
 	return wantarray ? @output : join '', @output;
 }
@@ -737,8 +745,8 @@ sub render {
 
 ### METHOD: filterSyntaxTree( \@nodes, $phaseName )
 ### Filter the given nodes by calling the appropriate method for each node as
-###		indicated by the phase name. Returns the filtered nodes, and throws an
-###		exception on any error.
+### indicated by the phase name. Returns the filtered nodes, and throws an
+### exception on any error.
 sub filterSyntaxTree {
 	my $self = shift		or throw Text::Templar::Exception::MethodError;
 	my $nodes = shift		or throw Text::Templar::Exception::ParamError 1, "nodes";
@@ -757,7 +765,10 @@ sub filterSyntaxTree {
 		$nodeType,
 		$method,
 		@processedNodes,
+		$maxIncludeDepth,
 	   );
+
+	$maxIncludeDepth = $self->maxIncludeDepth;
 
 	### Iterate over each node of the syntax tree and send each off to be
 	### processed. The processing method can either indicate that we should keep
@@ -770,7 +781,11 @@ sub filterSyntaxTree {
 		push( @keptNodes, $node ), next
 			if not blessed $node;
 
-		# Exceptions get skipped
+		# Templates (ie., from INCLUDE directives) get rendered in place.
+		push( @keptNodes, $self->_getRenderedValues($node) ), next
+			if $node->isa( 'Text::Templar' );
+
+		# Exceptions and anything else gets added as-is
 		push( @keptNodes, $node ), next
 			unless $node->isa( 'Text::Templar::node' );
 
@@ -778,14 +793,15 @@ sub filterSyntaxTree {
 		push( @keptNodes, $node->$phaseName($chompNextSubnode) ), next
 			if $node->isa( 'Text::Templar::subnode' );
 
-		### :FIXME: There has to be some more elegant way to do this...
+		### If this is the parse phase, and this node is a 'STOP' directive,
+		### stop the traversal
 		$nodeType = $node->type;
 		last if $phaseName eq 'render' && $nodeType eq 'STOP';
 
 		### Disallow nodes with the same name as methods we already have defined
 		### :FIXME: This, I suspect, is a rather expensive operation to do for
-		###		every node name. I should think there's a better way to do this,
-		###		or perhaps it's not even necessary.
+		### every node name. I should think there's a better way to do this,
+		### or perhaps it's not even necessary.
 		if ( $node->name ) {
 		  NO_STRICT: {
 				no strict 'refs';
@@ -804,18 +820,17 @@ sub filterSyntaxTree {
 		### Call the processing method, handling any errors we may encounter
 		### along the way
 		@processedNodes = try {
-			if ( ($self->_depth( $self->_depth + 1 )) > $self->maxIncludeDepth ) {
+			if ( ++$self->{_depth} > $maxIncludeDepth ) {
 				throw Text::Templar::Exception::RecursionError
-					"Too deep recursion (", $self->_depth, ") while ${phaseName}ing";
+					"Too deep recursion ($self->{_depth}) while ${phaseName}ing";
 			}
-			@rvals = $self->$method( $node );
-			$self->_depth( $self->_depth - 1 );
-
-			return @rvals;
+			$self->$method( $node );
 		} catch Text::Templar::Exception with {
 			my $exception = shift;
 			throw $exception if $exception->isa( 'Text::Templar::Exception::RecursionError' );
-			return $self->_handleException( $exception, $phaseName, $nodeType  );
+			$self->_getRenderedValues( $self->_handleException($exception, $phaseName, $nodeType) );
+		} finally {
+			$self->{_depth}--;
 		};
 
 		push @keptNodes, @processedNodes;
@@ -841,7 +856,7 @@ sub filterSyntaxTree {
 
 ### METHOD: preprocessMETHOD( $node )
 ### Process the given 'METHOD' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessMETHOD {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -853,7 +868,7 @@ sub preprocessMETHOD {
 
 ### METHOD: preprocessDUMP( $node )
 ### Process the given 'DUMP' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessDUMP {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -865,8 +880,8 @@ sub preprocessDUMP {
 
 ### METHOD: preprocessMETHODCALL( $node )
 ### Process the given 'METHODCALL' node in the parse phase. Returns the
-###		(possibly modified?)  node if it should be kept in the syntax tree, and
-###		returns the undefined value otherwise. Throws an exception on any error.
+### (possibly modified?)  node if it should be kept in the syntax tree, and
+### returns the undefined value otherwise. Throws an exception on any error.
 sub preprocessMETHODCALL {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -878,7 +893,7 @@ sub preprocessMETHODCALL {
 
 ### METHOD: preprocessDEFINE( $node )
 ### Process the given 'DEFINE' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessDEFINE {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -907,7 +922,7 @@ sub preprocessDEFINE {
 
 ### METHOD: preprocessINHERIT( $node )
 ### Process the given 'INHERIT' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessINHERIT {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -920,8 +935,8 @@ sub preprocessINHERIT {
 
 ### METHOD: preprocessSTOP( $node )
 ### Process the given 'STOP' node in the parse phase. Since an end node is only
-###		meaningful in the render phase, this method just returns the specified
-###		node. Throws an exception on any error.
+### meaningful in the render phase, this method just returns the specified
+### node. Throws an exception on any error.
 sub preprocessSTOP {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -932,8 +947,8 @@ sub preprocessSTOP {
 
 ### METHOD: preprocessEVAL( $node )
 ### Process the given 'EVAL' node in the parse phase. Returns the result of
-###		evaluating the codeblock or variable specified in the node. Throws an
-###		exception on any error.
+### evaluating the codeblock or variable specified in the node. Throws an
+### exception on any error.
 sub preprocessEVAL {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -945,21 +960,22 @@ sub preprocessEVAL {
 
 ### METHOD: preprocessINCLUDE( $node )
 ### Process the given 'INCLUDE' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessINCLUDE {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
 
-	my $templatePath = $self->_findFile( $node->path );
+	my $subTemplate = $self->new();
+	$subTemplate->includePath([ $self->includePath ]);
+	$subTemplate->load( $node->path );
 
-	my $subTree = $self->parse( $templatePath );
-	return wantarray ? @$subTree : $subTree;
+	return $subTemplate;
 }
 
 
 ### METHOD: preprocessQUERY( $node )
 ### Process the given 'QUERY' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessQUERY {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -972,7 +988,7 @@ sub preprocessQUERY {
 
 ### METHOD: preprocessENV( $node )
 ### Process the given 'ENV' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessENV {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -984,7 +1000,7 @@ sub preprocessENV {
 
 ### METHOD: preprocessMETA( $node )
 ### Process the given 'META' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessMETA {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -996,9 +1012,9 @@ sub preprocessMETA {
 
 ### METHOD: preprocessELSE( $node )
 ### Process the given 'ELSE' node in the parse phase. The else node doesn't
-###		require any preprocessing, so we just return it to its native habitat
-###		unharmed. 'Say, Terri. Look at that deadly poisonous ELSE directive:
-###		what a beautiful animal.'
+### require any preprocessing, so we just return it to its native habitat
+### unharmed. 'Say, Terri. Look at that deadly poisonous ELSE directive:
+### what a beautiful animal.'
 sub preprocessELSE {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1033,7 +1049,7 @@ sub preprocessELSIF {
 
 ### METHOD: preprocessFOREACH( $node )
 ### Process the given 'FOREACH' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessFOREACH {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1048,7 +1064,7 @@ sub preprocessFOREACH {
 
 ### METHOD: preprocessIF( $node )
 ### Process the given 'IF' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessIF {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1072,7 +1088,7 @@ sub preprocessIF {
 
 ### METHOD: preprocessGREP( $node )
 ### Process the given 'GREP' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessGREP {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1087,7 +1103,7 @@ sub preprocessGREP {
 
 ### METHOD: preprocessMAP( $node )
 ### Process the given 'MAP' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessMAP {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1102,7 +1118,7 @@ sub preprocessMAP {
 
 ### METHOD: preprocessSORT( $node )
 ### Process the given 'SORT' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessSORT {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1117,7 +1133,7 @@ sub preprocessSORT {
 
 ### METHOD: preprocessJOIN( $node )
 ### Process the given 'JOIN' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessJOIN {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1132,7 +1148,7 @@ sub preprocessJOIN {
 
 ### METHOD: preprocessMAXLENGTH( $node )
 ### Process the given 'MAXLENGTH' node in the parse phase. Just returns the
-###		node. Throws an exception on any error.
+### node. Throws an exception on any error.
 sub preprocessMAXLENGTH {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1156,7 +1172,7 @@ sub preprocessMAXLENGTH {
 
 ### METHOD: preprocessCOMMENT( $node )
 ### Process the given 'COMMENT' node in the parse phase. Throws an exception on
-###		any error.
+### any error.
 sub preprocessCOMMENT {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1168,12 +1184,14 @@ sub preprocessCOMMENT {
 
 ### METHOD: preprocessDELAYED( $node )
 ### Process the given 'DELAYED' node in the parse phase. The DELAYED tag just
-###		delays the processing of the nodes it contains until the next phase, so
-###		this method just returns the DELAYED node's subnodes. Throws an
-###		exception on any error.
+### delays the processing of the nodes it contains until the next phase, so
+### this method just returns the DELAYED node's subnodes. Throws an
+### exception on any error.
 sub preprocessDELAYED {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
+
+	warn "Deprecated tag DELAYED used in ", $self->sourceName;
 
 	return @{$node->subnodes};
 }
@@ -1189,8 +1207,8 @@ sub preprocessDELAYED {
 
 ### METHOD: renderMETHOD( $node )
 ### Process the given 'METHOD' node in the render phase. Returns the content
-###		that should be placed in the position occupied by the METHOD tag. Throws
-###		an exception on any error.
+### that should be placed in the position occupied by the METHOD tag. Throws
+### an exception on any error.
 sub renderMETHOD {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1223,8 +1241,8 @@ sub renderMETHOD {
 
 ### METHOD: renderDUMP( $node )
 ### Process the given 'DUMP' node in the render phase. Returns the content
-###		that should be placed in the position occupied by the DUMP tag. Throws
-###		an exception on any error.
+### that should be placed in the position occupied by the DUMP tag. Throws
+### an exception on any error.
 sub renderDUMP {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1236,8 +1254,8 @@ sub renderDUMP {
 
 ### METHOD: renderMETHODCALL( $node )
 ### Process the given 'METHODCALL' node in the render phase. Returns the content
-###		that should be placed in the position occupied by the METHODCALL
-###		tag. Throws an exception on any error.
+### that should be placed in the position occupied by the METHODCALL
+### tag. Throws an exception on any error.
 sub renderMETHODCALL {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1256,13 +1274,13 @@ sub renderMETHODCALL {
 		push @rvals, $self->_traverseMethodChain( $object, $node->methodchain );
 	}
 
-	return @rvals;
+	return $self->_getRenderedValues( @rvals );
 }
 
 
 ### METHOD: renderDEFINE( $node )
 ### Process the given 'DEFINE' node in the render phase. Throws an exception on
-###		any error.
+### any error.
 sub renderDEFINE {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1280,7 +1298,7 @@ sub renderDEFINE {
 
 ### METHOD: renderINHERIT( $node )
 ### Process the given 'INHERIT' node in the render phase. Since inheritance
-###		happens before the parse phase, this generates an exception.
+### happens before the parse phase, this generates an exception.
 sub renderINHERIT {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1292,9 +1310,9 @@ sub renderINHERIT {
 
 ### METHOD: renderSTOP( $node )
 ### Process the given 'STOP' node in the render phase.  Since an end node indicates
-###		the end of the syntax tree while in the parse phase, we shouldn't ever
-###		reach this method, and all this method does is throw an exception with a
-###		message to that effect.
+### the end of the syntax tree while in the parse phase, we shouldn't ever
+### reach this method, and all this method does is throw an exception with a
+### message to that effect.
 sub renderSTOP {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 
@@ -1305,8 +1323,8 @@ sub renderSTOP {
 
 ### METHOD: renderEVAL( $node )
 ### Process the given 'EVAL' node in the render phase. Returns the result of
-###		evaluating the codeblock or variable specified in the node. Throws an
-###		exception on any error.
+### evaluating the codeblock or variable specified in the node. Throws an
+### exception on any error.
 sub renderEVAL {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1340,7 +1358,7 @@ sub renderEVAL {
 
 ### METHOD: renderINCLUDE( $node )
 ### Process the given 'INCLUDE' node in the render phase. Throws an exception on
-###		any error.
+### any error.
 sub renderINCLUDE {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1362,8 +1380,8 @@ sub renderINCLUDE {
 
 ### METHOD: renderQUERY( $node )
 ### Process the given 'QUERY' node in the render phase. Since queries are really
-###		only useful before the render phase, this method just returns the empty
-###		list. Throws an exception on any error.
+### only useful before the render phase, this method just returns the empty
+### list. Throws an exception on any error.
 sub renderQUERY {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1374,7 +1392,7 @@ sub renderQUERY {
 
 ### METHOD: renderENV( $node )
 ### Process the given 'ENV' node in the render phase. Throws an exception on
-###		any error.
+### any error.
 sub renderENV {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1400,8 +1418,8 @@ sub renderENV {
 
 ### METHOD: renderMETA( $node )
 ### Process the given 'META' node in the render phase. Since metafields are
-###		really only useful before the render phase, this method just returns
-###		the empty list. Throws an exception on any error.
+### really only useful before the render phase, this method just returns
+### the empty list. Throws an exception on any error.
 sub renderMETA {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1412,8 +1430,8 @@ sub renderMETA {
 
 ### METHOD: renderELSE( $node )
 ### Process the given 'ELSE' node in the parse phase. Rendering an ELSE
-###		outside of an enclosing IF is an error, so this method just generates an
-###		exception with a message to that effect.
+### outside of an enclosing IF is an error, so this method just generates an
+### exception with a message to that effect.
 sub renderELSE {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1424,8 +1442,8 @@ sub renderELSE {
 
 ### METHOD: renderELSIF( $node )
 ### Process the given 'ELSIF' node in the parse phase.  Rendering an ELSIF
-###		outside of an enclosing IF is an error, so this method just generates an
-###		exception with a message to that effect.
+### outside of an enclosing IF is an error, so this method just generates an
+### exception with a message to that effect.
 sub renderELSIF {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1436,7 +1454,7 @@ sub renderELSIF {
 
 ### METHOD: renderFOREACH( $node )
 ### Process the given 'FOREACH' node in the render phase. Throws an exception on
-###		any error.
+### any error.
 sub renderFOREACH {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1451,7 +1469,6 @@ sub renderFOREACH {
 		$renderedSubtree,
 		$iteratorDefine,
 		@iteratedNodes,
-		$iteration,
 		$nodeName,
 	   );
 
@@ -1463,61 +1480,8 @@ sub renderFOREACH {
 
 	### Get the subnodes for this container
 	$subTree = $node->subnodes;
-	@iteratedContent = @iteratedNodes = ();
-
-	### If the foreach has an object and a methodchain, build the iterated list
-	### out of the results of calling the method chain on the object/s
-	if ( $node->object && $node->methodchain ) {
-
-		$nodeName = $node->object;
-
-		### Iterate over the objects, calling the method chain on each one
-		foreach my $object ( $self->getNodeContent($node->object) ) {
-			my @results = $self->_traverseMethodChain( $object, $node->methodchain );
-
-			if ( $node->pair ) {
-				@iteratedContent = $self->_buildHashIteratedContent( $node, @results );
-			}
-
-			elsif ( $node->deref ) {
-				foreach my $result ( @results ) {
-					push @iteratedContent, $self->_deref( $result );
-				}
-			}
-
-			else {
-				@iteratedContent = @results;
-			}
-		}
-
-	}
-
-	### If the foreach is a dereference, figure out how to dereference the
-	### argument and set the iterated content to that.
-	elsif ( $node->object && $node->deref ) {
-		foreach my $reference ( $self->getNodeContent($node->object) ) {
-			push @iteratedContent, $self->_deref( $reference );
-		}
-
-		$nodeName = $node->object;
-	}
-
-	### It's just plain content
-	else {
-
-		$nodeName = $node->object || $node->name;
-
-		# Build an array of hashrefs if it's a hash iterator
-		if ( $node->pair ) {
-			my @results = $self->getNodeContent( $node->object || $node->name );
-			@iteratedContent = $self->_buildHashIteratedContent( $node, @results );
-		}
-
-		# Otherwise, just fetch the content
-		else {
-			@iteratedContent = $self->getNodeContent( $node->object || $node->name );
-		}
-	}
+	@iteratedContent = $self->_buildIteratedContent( $node );
+	@iteratedNodes = ();
 
 	### Build a shortcut for accessing the iterator. This will show up in the
 	### evaluation environment of anything that requires an eval in the
@@ -1527,13 +1491,13 @@ sub renderFOREACH {
 	### Iterate over each element of the content array, overriding the real
 	### content of the node with the iterated value, and rendering the subtree
 	### inside the foreach.
-	$iteration = 1;
+	$nodeName = $node->name || $node->object;
 	$self->setDefines( '$LAST_ITERATION' => 0 );
-	foreach my $containedElement ( @iteratedContent ) {
-		$self->setNodeContent( $node->name => $containedElement );
+	for ( my $i = 0; $i <= $#iteratedContent ; $i++ ) {
+		$self->setNodeContent( $nodeName => $iteratedContent[$i] );
 		$self->setDefines( $nodeName => $iteratorDefine );
-		$self->setDefines( '$LAST_ITERATION' => 1 ) if (scalar @iteratedContent == $iteration);
-		$self->setDefines( '$ITERATION' => $iteration++ );
+		$self->setDefines( '$LAST_ITERATION' => 1 ) if $i == $#iteratedContent;
+		$self->setDefines( '$ITERATION' => $i + 1 );
 
 		$renderedSubtree = $self->filterSyntaxTree( $subTree, 'render' );
 		push @iteratedNodes, @$renderedSubtree;
@@ -1551,7 +1515,7 @@ sub renderFOREACH {
 
 ### METHOD: renderIF( $node )
 ### Process the given 'IF' node in the render phase. Throws an exception on
-###		any error.
+### any error.
 sub renderIF {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1613,7 +1577,7 @@ sub renderIF {
 
 ### METHOD: renderGREP( $node )
 ### Process the given 'GREP' node in the render phase. Throws an exception on
-###		any error.
+### any error.
 sub renderGREP {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1682,7 +1646,7 @@ sub renderGREP {
 
 ### METHOD: renderMAP( $node )
 ### Process the given 'MAP' node in the render phase. Throws an exception on
-###		any error.
+### any error.
 sub renderMAP {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1738,7 +1702,7 @@ sub renderMAP {
 	$self->setNodeContent( $node->name, @transformedContents );
 	$self->setDefines( $node->name, $iteratorDefine );
 
-	### Now render the node's subtree with the changes contents and define
+	### Now render the node's subtree with the changed contents and define
 	@renderedTree = $self->filterSyntaxTree( $subTree, 'render' );
 
 	### Restore the real contents and define
@@ -1751,7 +1715,7 @@ sub renderMAP {
 
 ### METHOD: renderSORT( $node )
 ### Process the given 'SORT' node in the render phase. Throws an exception on
-###		any error.
+### any error.
 sub renderSORT {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1822,7 +1786,7 @@ sub renderSORT {
 
 ### METHOD: renderJOIN( $node )
 ### Process the given 'JOIN' node in the render phase. Throws an exception on
-###		any error.
+### any error.
 sub renderJOIN {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1923,7 +1887,7 @@ sub renderJOIN {
 
 ### METHOD: renderMAXLENGTH( $node )
 ### Process the given 'MAXLENGTH' node in the render phase. Throws an exception on
-###		any error.
+### any error.
 sub renderMAXLENGTH {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1976,7 +1940,7 @@ sub renderMAXLENGTH {
 
 ### METHOD: renderCOMMENT( $node )
 ### Process the given 'COMMENT' node in the render phase. Throws an exception on
-###		any error.
+### any error.
 sub renderCOMMENT {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -1988,9 +1952,9 @@ sub renderCOMMENT {
 
 ### METHOD: renderDELAYED( $node )
 ### Process the given 'DELAYED' node in the render phase. Since the DELAY is
-###		supposed to postpone processing until the render phase, encountering a
-###		DELAY node here is an error, so all this method does is generate an
-###		exception with a message to that effect.
+### supposed to postpone processing until the render phase, encountering a
+### DELAY node here is an error, so all this method does is generate an
+### exception with a message to that effect.
 sub renderDELAYED {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -2006,10 +1970,10 @@ sub renderDELAYED {
 ###	P R I V A T E / P R O T E C T E D   M E T H O D S
 ###############################################################################
 
-### (PROTECTED STATIC) METHOD: _GetParser( undef )
+### (PROTECTED CLASS) METHOD: _GetParser( undef )
 ### Get the parser object for parsing templar templates. Constructs a new parser
-###		if necessary. Return the parser object, and throws an exception on any
-###		error.
+### if necessary. Return the parser object, and throws an exception on any
+### error.
 sub _GetParser {
 	my $class = shift	or throw Text::Templar::Exception::MethodError;
 
@@ -2020,6 +1984,62 @@ sub _GetParser {
 	}
 
 	return $parser;
+}
+
+
+### (PROTECTED) METHOD: _buildIteratedContent( $node )
+### Build a list of content that will be iterated over out of the given I<node>.
+sub _buildIteratedContent {
+	my $self	= shift		or throw Text::Templar::Exception::MethodError;
+	my $node	= shift		or throw Text::Templar::Exception::ParamError 1, "node";
+
+	my @iteratedContent = ();
+
+	### If the foreach has an object and a methodchain, build the iterated list
+	### out of the results of calling the method chain on the object/s
+	if ( $node->object && $node->methodchain ) {
+
+		### Iterate over the objects, calling the method chain on each one
+		foreach my $object ( $self->getNodeContent($node->object) ) {
+			my @results = $self->_traverseMethodChain( $object, $node->methodchain );
+
+			# If the node's a hash iterator, build the iterated content
+			if ( $node->pair ) {
+				push @iteratedContent,
+					$self->_buildHashIteratedContent( $node, @results );
+			}
+
+			# ...or if it's a deref operation, deref it
+			elsif ( $node->deref ) {
+				foreach my $result ( @results ) {
+					push @iteratedContent, $self->_deref( $result );
+				}
+			}
+
+			# ...otherwise, we don't have anything else to do
+			else {
+				push @iteratedContent, @results;
+			}
+		}
+
+	}
+
+	### If the foreach is a dereference, figure out how to dereference the
+	### argument and set the iterated content to that.
+	elsif ( $node->object && $node->deref ) {
+		foreach my $reference ( $self->getNodeContent($node->object) ) {
+			push @iteratedContent, $self->_deref( $reference );
+		}
+	}
+
+	### It's either plain content or a hash iterator
+	else {
+		@iteratedContent = $self->getNodeContent( $node->object || $node->name );
+		@iteratedContent = $self->_buildHashIteratedContent( $node, @iteratedContent )
+			if $node->pair;
+	}
+
+	return @iteratedContent;
 }
 
 
@@ -2039,8 +2059,7 @@ sub _buildHashIteratedContent {
 	# If we got one result and it's a hashref, map the single hash
 	# into a list of hashrefs with key and value pairs
 	if ( @content == 1 && ref $content[0] eq 'HASH' ) {
-		push @iteratedContent,
-			map {{ key => $_, value => $content[0]{$_} }} keys %{$content[0]};
+		@iteratedContent = map {{ key => $_, value => $content[0]{$_} }} keys %{$content[0]};
 	}
 
 	# If we got an even array of content, it must be a regular
@@ -2052,11 +2071,27 @@ sub _buildHashIteratedContent {
 				value => shift @content,
 			};
 		}
-	} else {
+	}
+
+	# ...otherwise, something funky happened, so throw an exception.
+	else {
 		my $nodeName = $node->name;
 		throw Text::Templar::Exception
 			"Cannot do hash iteration: Pair value for '$nodeName' is neither hash nor hashref.";
 	}
+
+	# Handle sorted hash iterations
+	if ( my $sortNode = $node->hashpairsort ) {
+		my ( $realDefine, $aDefine, $bDefine ) = $self->getDefines( $node->name, 'a', 'b' );
+
+		$self->setDefines( a => '$_[0]', b => '$_[1]' );
+		my $sortFunc = $self->_buildClosure( $sortNode->content );
+		@iteratedContent = sort {
+			$sortFunc->( $a, $b, $self, $sortNode );
+		} @iteratedContent;
+		$self->setDefines( $node->name => $realDefine, a => $aDefine, b => $bDefine );
+	}
+
 
 	return @iteratedContent;
 }
@@ -2106,7 +2141,7 @@ sub _parseTemplateSource {
 
 ###	(PROTECTED) METHOD: _parseFile( $filename )
 ### Load and parse a file, returning the resultant syntax tree. Throws an
-###		exception on any error.
+### exception on any error.
 sub _parseFile {
 	my $self = shift		or throw Text::Templar::Exception::MethodError;
 	my $filename = shift	or throw Text::Templar::Exception::ParamError 1, "filename";
@@ -2122,7 +2157,7 @@ sub _parseFile {
 	###	to use it, and the source from which the tree was parsed hasn't been
 	###	modified since it was loaded, use the cached tree.
 	### :TODO: Maybe add some kind of time threshold so we only stat() the file
-	###		every so often?
+	### every so often?
 	if ( exists $CachedTree{$filename}
 		 && $self->cacheTrees
 		 && $CachedTree{$filename}{mtime} >= (stat $filename)[9] )
@@ -2146,7 +2181,7 @@ sub _parseFile {
 
 ###	(PROTECTED) METHOD: _parseArray( \@contentArray )
 ### Parse an array reference of template source, returning the
-###		resultant syntax tree. Throws an exception on any error.
+### resultant syntax tree. Throws an exception on any error.
 sub _parseArray {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $content = shift	or throw Text::Templar::Exception::ParamError 1, "content array";
@@ -2157,7 +2192,7 @@ sub _parseArray {
 
 ### (PROTECTED) METHOD: _loadFile( $path )
 ### Load the file specified by path and return its contents as an array (list
-###		context) or arrayref (scalar context). Throws an exception on any error.
+### context) or arrayref (scalar context). Throws an exception on any error.
 sub _loadFile {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $path = shift	or throw Text::Templar::Exception::ParamError 1, "filename";
@@ -2174,7 +2209,7 @@ sub _loadFile {
 	### version, and the cached source is up to date, use it instead of loading
 	### it again
 	### :TODO: Maybe add some kind of time threshold so we only stat() the file
-	###		every so often?
+	### every so often?
 	if ( exists $CachedSource{$path}
 		 && $self->cacheSource
 		 && $CachedSource{$path}{mtime} >= (stat $path)[9] )
@@ -2256,8 +2291,8 @@ sub _findFile {
 
 ### (PROTECTED) METHOD: _evaluateCondition( $node )
 ### Evaluate the matchSpec associated with the given node with the node's
-###		content, returning '1' if the condition is true, and the empty list if
-###		it is not.
+### content, returning '1' if the condition is true, and the empty list if
+### it is not.
 sub _evaluateCondition {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $node = shift	or throw Text::Templar::Exception::ParamError 1, "node";
@@ -2283,7 +2318,8 @@ sub _evaluateCondition {
 		### Fetch the last object to be added to the content array, and traverse
 		### the specified method chain on it. A positive value causes the
 		### condition to succeed.
-		$object = ($self->getNodeContent( $node->object ))[-1] ;
+		$object = ($self->getNodeContent( $node->object ))[-1]
+			or return 0;
 		my @results = $self->_traverseMethodChain( $object, $node->methodchain );
 
 		if (( $matchSpec = $node->matchspec )) {
@@ -2313,7 +2349,7 @@ sub _evaluateCondition {
 
 ### (PROTECTED) METHOD: _deref( $value )
 ### Handle dereference of a target value for METHODCALL DEREF <name>, FOREACH
-###		DEREF <name>, etc.
+### DEREF <name>, etc.
 sub _deref {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $value = shift	or throw Text::Templar::Exception::ParamError 1, "value";
@@ -2334,61 +2370,89 @@ sub _deref {
 
 ### (PROTECTED) METHOD: _traverseMethodChain( $object, \@methodChain=Text::Templar::method )
 ###	Traverse each element in a methodchain, calling a method or fetching a value
-###		from a reference for each one.
+### from a reference for each one.
 sub _traverseMethodChain {
 	my $self = shift		or throw Text::Templar::Exception::MethodError;
 	my $object = shift		or throw Text::Templar::Exception::ParamError 1, "object";
 	my $methodchain = shift	or throw Text::Templar::Exception::ParamError 2, "methodchain";
 
-	my @results = ();
-	my $lastValue = $object;
-	my $call;
+	my (
+		@results,				# The results of traversing the methodchain
+		$lastValue,				# The result of the last "method call", which
+                                # serves as the next thing to use as the
+                                # receiver of the next method in the chain
+		$chainProgress,			# Diagnostic to keep track of what methods we've
+                                # called already
+		$action,				# Diagnostic for building a description of the
+                                # current "call"
+		$call,					# The "call" code fragment that's currently up
+                                # for evaluation
+		$code,					# The assembled code to be evaled
+	   );
 
-	### :TODO: Maybe eventually make this recursive so we can support heirarchal
-	### chains like <% FOREACH id IN person teams.id %>, which would iterate
-	### over the result of calling ->id() on each of the objects returned by
-	### calling person->teams()
+	# Initialize variables
+	@results = ();
+	$lastValue = $object;
+	$chainProgress = ref $object ? "$object" : "'$object'";
 
 	### Iterate over each method in the methodchain, building each one
   METHOD: foreach my $method ( @$methodchain ) {
 
-		### If it's an object, use the method chain
-		if ( blessed $lastValue ) {
-			$call = '$lastValue'. $method->build;
-		}
-
 		### If it's a hash, use the hash chain
-		elsif ( ref $lastValue eq 'HASH' ) {
-			$call = '$lastValue' . $method->buildHash;
+		if ( ref $lastValue eq 'HASH' ) {
+			$action = "fetching value";
+			$call = $method->buildHash;
 		}
 
-		### If it's an array, use the array chain
-		elsif ( ref $lastValue eq 'ARRAY' ) {
-			$call = '$lastValue' . $method->buildArray;
+		### If it's an array, or the next link in the chain looks like a
+		### arrayindex, use the array chain
+		elsif ( ref $lastValue eq 'ARRAY' || $method->name =~ m{^\d+$} ) {
+			unless ( $method->name =~ m{^\d+$} ) {
+				my $errmsg = sprintf( q{Error in methodchain: %s: Can't use '%s' as an array index},
+									  $chainProgress, $method->name );
+				throw Text::Templar::Exception::EvalError $errmsg;
+			}
+
+			$lastValue = [ @results ] unless ref $lastValue eq 'ARRAY';
+			$action = "fetching index";
+			$call = $method->buildArray;
 		}
 
-		### If it's anything else, insert an exception object and skip to
-		### the next object
+		### Handle case of illegal method names so we get a sensible error message.
+		elsif ( $method->name !~ m{^[a-zA-Z_]} ) {
+			my $errmsg = sprintf( q{Error in methodchain: %s: Can't use '%s' as a method name},
+								  $chainProgress, $method->name );
+			throw Text::Templar::Exception::EvalError $errmsg;
+		}
+
+		### Consider anything else an object. It could be a scalar, but then we
+		### can't really tell a simple scalar from a package name, so we just
+		### let Perl generate an appropriate error message when we call the
+		### method on it if it's not something a method can be called on.
 		else {
-			push @results, new Text::Templar::Exception ( "Cannot process '",
-														  ref $lastValue ? "a " . ref $lastValue : $lastValue,
-														  "' as an object." );
-			last METHOD;
+			$action = "calling";
+			$call = $method->build;
 		}
 
 		### Evaluate the call
-		@results = eval "$call";
+		$code = '$lastValue' . $call;
+		@results = eval $code;
 
 		if ( $@ ) {
-			$lastValue = new Text::Templar::Exception::EvalError $call, $@;
-			last METHOD;
+			my $errmsg = sprintf( 'Error in methodchain: %s %s on %s: %s',
+								  $action,
+								  $call,
+								  $chainProgress,
+								  $@ );
+
+			throw Text::Templar::Exception::EvalError $errmsg;
 		}
 
-	} continue {
+		# Add the last call onto the chain progress string
+		$chainProgress .= $call;
 
-		# If we're looping again, get the last value off the results and chain
-		# off of that.
-		$lastValue = $results[-1];
+	} continue {
+		$lastValue = $results[ -1 ];
 	}
 
 	return @results;
@@ -2397,8 +2461,8 @@ sub _traverseMethodChain {
 
 ###	(PROTECTED) METHOD: _getEvaluatedValue( $code )
 ### Evaluates the specified code inside a private environment and returns the
-###		result. Throws an exception if the code to be evaluated produces an
-###		error, and on any other error.
+### result. Throws an exception if the code to be evaluated produces an
+### error, and on any other error.
 sub _getEvaluatedValue {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $code = shift;
@@ -2496,9 +2560,9 @@ sub _buildClosure {
 
 ### (PROTECTED) METHOD: _getRenderedEvaluatedValue( $code )
 ### Evaluates the specified code inside a private environment, renders it, and
-###		returns the result. Handles exceptions generated by the specified code
-###		by rendering them according to the errorOutput configuration. Throws an
-###		exception on any error.
+### returns the result. Handles exceptions generated by the specified code
+### by rendering them according to the errorOutput configuration. Throws an
+### exception on any error.
 sub _getRenderedEvaluatedValue {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $code = shift	or throw Text::Templar::Exception::ParamError 1, "code";
@@ -2520,10 +2584,10 @@ sub _getRenderedEvaluatedValue {
 
 ### (PROTECTED) METHOD: _handleException( $exception=Text::Templar::Exception, $mode )
 ### Take action on an exception that occurs in a template. The action taken is
-###		configured via the errorOutput() configuration method. Returns a handled
-###		version of the exception (either the exception object or the empty list
-###		if the exception object should be ignored at the current point of
-###		execution).
+### configured via the errorOutput() configuration method. Returns a handled
+### version of the exception (either the exception object or the empty list
+### if the exception object should be ignored at the current point of
+### execution).
 sub _handleException {
 	my $self = shift		or throw Text::Templar::Exception::MethodError;
 	my $exception = shift	or throw Text::Templar::Exception::ParamError 1, "exception object";
@@ -2534,11 +2598,16 @@ sub _handleException {
 	return () if $output eq 'ignore';
 
 	if ( $output eq 'inline' ) {
-		$self->_pushTailedErrors( $exception->stringify );
+		# Add the error to the list of tailed errors? Perhaps this was meant to
+		# add them in case the setting changed after handling?
+		#$self->_pushTailedErrors( $exception->stringify );
 		return ( $exception );
 	} elsif ( $output eq 'tailed' ) {
 		$self->_pushTailedErrors( $exception->stringify );
 		return ();
+	} elsif ( $output eq 'both' ) {
+		$self->_pushTailedErrors( $exception->stringify );
+		return ( $exception );
 	} else {
 		my $ofh = $self->_errorOutputFh
 			or throw Text::Templar::Exception::TemplateError
@@ -2576,11 +2645,16 @@ sub _getFileHandle {
 
 ### (PROTECTED) METHOD: _buildComment( $message )
 ### Builds and returns a comment in the manner defined by the object's
-###		commentOpen and commentClose attributes. Throws an exception on any
-###		error.
+### commentOpen and commentClose attributes. Throws an exception on any
+### error.
 sub _buildComment {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my $message = shift	or throw Text::Templar::Exception::ParamError 1, "message";
+
+	# Remove double-hypens so they don't muck with HTML comments. This really
+	# should be a feature of the comment-building mechanism, but that'll take a
+	# fairly heavy-handed reworking of the comment code.
+	$message =~ s{--}{-}g;
 
 	return sprintf( '%s %s %s',
 					$self->commentOpen,
@@ -2591,12 +2665,12 @@ sub _buildComment {
 
 ### (PROTECTED) METHOD: _getRenderedValues( @values )
 ### Render each value into a suitable string for output. Handles simple scalar
-###		values, array references, hash references, templar objects, exceptions,
-###		and other objects of a class that defines a C<stringify()>,
-###		C<as_string>, C<asString>, or C<render> method. Returns an array of
-###		rendered values if called in list context, or the rendered values joined
-###		together in a a single string if called in scalar context. Throws an
-###		exception on any error.
+### values, array references, hash references, templar objects, exceptions,
+### and other objects of a class that defines a C<stringify()>,
+### C<as_string>, C<asString>, or C<render> method. Returns an array of
+### rendered values if called in list context, or the rendered values joined
+### together in a a single string if called in scalar context. Throws an
+### exception on any error.
 sub _getRenderedValues {
 	my $self = shift	or throw Text::Templar::Exception::MethodError;
 	my @args = @_ or return ();
@@ -2675,8 +2749,8 @@ sub _getRenderedValues {
 
 ### (PRIVATE STATIC) METHOD: __InitErrorOutput( undef )
 ### Nasty kluge to assure that error output is initialized in the case that it's
-###		not explicitly configured either before or during the first constructor
-###		call.
+### not explicitly configured either before or during the first constructor
+### call.
 sub __InitErrorOutput {
 	my $class = shift	or throw Text::Templar::Exception::MethodError;
 	return 1 if $class->__ErroutIsInitialized;
@@ -2696,7 +2770,7 @@ sub __InitErrorOutput {
 
 ### (PROTECTED) FUNCTION: _buildParseError( \@errors )
 ### Given an array of parser errors, return a formatted error message composed
-###		of all of them.
+### of all of them.
 sub _buildParseError {
 	my $errorArray = shift or throw Text::Templar::Exception::ParamError 1, "errorArray";
 	throw Text::Templar::Exception::ParamError 1, "errorArray"
@@ -2770,7 +2844,7 @@ DESTROY		{}
 }
 
 ### Chomped node class (nodes which shouldn't leave blank lines in the output when
-###		they are followed directly by a newline
+### they are followed directly by a newline
 {
 	package Text::Templar::chompednode;
 	our @ISA = qw{Text::Templar::node};
@@ -2807,7 +2881,7 @@ DESTROY		{}
 }
 
 ### Chomped node class (nodes which shouldn't leave blank lines in the output when
-###		they are followed directly by a newline
+### they are followed directly by a newline
 {
 	package Text::Templar::conditionalnode;
 	our @ISA = qw{Text::Templar::containernode};
@@ -2905,19 +2979,28 @@ DESTROY		{}
 		my $self = shift or return undef;
 		my @args = @_;
 
-		my $code = "sub { $$self }";
-		my $func = eval $code;
-		throw Text::Templar::Exception::EvalError $code, $@
-			if $@;
+		unless ( defined $self->{func} && ref $self->{func} eq 'CODE' ) {
+			my $code = "sub { $self->{code} }";
+			$self->{func} = eval $code;
+			throw Text::Templar::Exception::EvalError $code, $@
+				if $@;
+		}
 
-		return $func->( @args );
+		return $self->{func}( @args );
 	}
 	sub content {
 		my $self = shift or return '';
-		(my $munged = $$self ) =~ s{^{(.*)}$}{$1}g;
+		(my $munged = $self->{code} ) =~ s{^{(.*)}$}{$1}g;
 		return $munged;
 	}
 }
+
+# Hash-pair sort code block
+{
+	package Text::Templar::hashpairsort;
+	our @ISA = qw{Text::Templar::codeblock};
+}
+
 
 # Array argument
 {
@@ -3001,9 +3084,10 @@ DESTROY		{}
 
 	sub buildArray {
 		my $self = shift;
-		return sprintf( '->[%d]', $self->name );
+		return sprintf( '->[%s]', $self->name );
 	}
 }
 
 ### Return success when loading
 1;
+###	AUTOGENERATED DOCUMENTATION FOLLOWS

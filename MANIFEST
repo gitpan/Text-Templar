@@ -1,9 +1,11 @@
+ChangeLog
 MANIFEST
 Makefile.PL
 README
 grammar
 lib/Text/Templar.pm
 lib/Text/Templar/Exceptions.pm
+misc/checkparser.pl
 pod/Parser.pod
 pod/Templar.pod
 t/cache.t
@@ -12,6 +14,7 @@ t/conditional.t
 t/define.t
 t/delay.t
 t/env.t
+t/erroroutput.t
 t/eval.t
 t/foreach.t
 t/grep.t
@@ -32,6 +35,7 @@ t/templates/conditionaltest.tmpl
 t/templates/definetest.tmpl
 t/templates/delaytest.tmpl
 t/templates/envtest.tmpl
+t/templates/erroroutput.tmpl
 t/templates/evaltest.tmpl
 t/templates/foreachtest.tmpl
 t/templates/greptest.tmpl

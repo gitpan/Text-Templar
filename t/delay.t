@@ -2,17 +2,20 @@
 use strict;
 
 BEGIN {
+	use vars qw{$WarningGiven};
+
 	use Text::Templar	qw{};
 	use Text::Templar::Exceptions		qw{:syntax};
 	use Scalar::Util	qw{blessed};
 }
 
 #$Text::Templar::Debug = Text::Templar::DEBUG_ALL;
+$SIG{__WARN__} = sub { $WarningGiven = 1; };
 
 my $t = new Text::Templar 
 	includePath => [ './t/templates' ]
 	or print( "1..0\n" ), exit 0;
-my $numTests = 4;
+my $numTests = 5;
 my $numTest = 0;
 
 print "1..$numTests\n";
@@ -28,6 +31,8 @@ Test(
 	 }
 );
 
+### 2: Warning issued?
+Test( $WarningGiven );
 
 ###	2: One-line define
 Test( grep { blessed $_ && $_->type eq 'ENV' } @{$t->syntaxTree} );

@@ -267,7 +267,7 @@ Make it possible to turn off stacktraces for speed with the C<$Exception::TERSE>
 
 =head1 RCSID
 
-$Id: Exceptions.pm,v 1.6 2001/12/31 21:30:17 deveiant Exp $
+$Id: Exceptions.pm,v 1.8 2002/08/08 15:57:58 deveiant Exp $
 
 =head1 AUTHOR
 
@@ -301,7 +301,7 @@ package Text::Templar::Exceptions;
 use strict;
 
 BEGIN {
-	require 5.6.0;
+	require 5.006;
 	use base qw{Exporter};
 }
 
@@ -319,12 +319,12 @@ package Text::Templar::Exception;
 use strict;
 
 BEGIN {
-	require 5.6.0;
+	require 5.006;
 
 	### Package constants
 	use vars		qw{$VERSION $RCSID @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $AUTOLOAD};
-	$VERSION = do { my @r = (q$Revision: 1.6 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
-	$RCSID			= q$Id: Exceptions.pm,v 1.6 2001/12/31 21:30:17 deveiant Exp $;
+	$VERSION = do { my @r = (q$Revision: 1.8 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+	$RCSID			= q$Id: Exceptions.pm,v 1.8 2002/08/08 15:57:58 deveiant Exp $;
 
 	### Superclass
 	use base		qw{Exporter};
@@ -794,6 +794,22 @@ package Text::Templar::Exception::EvalError;
 use strict;
 use base 'Text::Templar::Exception';
 our $ErrorType = 'evaluation';
+
+sub new {
+	my $proto = shift;
+
+	my $errmsg;
+	if ( @_ == 2 ) {
+		my ( $call, $err ) = @_;
+		chomp( $call, $err );
+		$errmsg = "Error while evaluating '$call': $err";
+	} else {
+		chomp @_;
+		$errmsg = join '', @_;
+	}
+
+	return $proto->SUPER::new( $errmsg );
+}
 
 ### RecursionError
 package Text::Templar::Exception::RecursionError;

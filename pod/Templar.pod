@@ -2,12 +2,12 @@
 ################################################################################
 #
 #  Templar.pod - POD documentation for the Text::Templar class
-#  $Id: Templar.pod,v 1.11 2001/12/31 21:02:57 deveiant Exp $
+#  $Id: Templar.pod,v 1.14 2002/08/08 22:44:05 deveiant Exp $
 #
 #  Authors: Michael Granger <ged@FaerieMUD.org>
 #  and Dave McCorkhill <scotus@FaerieMUD.org>
 #
-#  Copyright (c) 1998-2001 Michael Granger and The FaerieMUD Consortium. All
+#  Copyright (c) 1998-2002 Michael Granger and The FaerieMUD Consortium. All
 #  rights reserved.
 #
 #  This module is free software. You may use, modify, and/or redistribute this
@@ -29,36 +29,37 @@ Text::Templar - a document-generation object class
 =head1 SYNOPSIS
 
   use Text::Templar;
-
+  
   my $template = <<'EOF';
-
+  
   <HTML><HEAD><TITLE>This is the title: <% METHOD title %></TITLE></HEAD>
-
+  
   <BODY>
-
+  
   <% METHOD body %>
-
+  
   <ADDRESS>
   <% METHOD footer %>
   </ADDRESS>
-
+  
   </BODY>
   EOF
-
+  
   my $templateObject = new Text::Templar
 	[ $template ];
-
+  
   $templateObject->title( "The Rest of the Story" );
   $templateObject->body( @content );
   $templateObject->footer( "Page 1" );
-
+  
   print $templateObject->render;
 
 =head1 REQUIRES
 
-C<Perl 5.6>, L<Class::Translucent>, L<IO::File>, L<IO::Handle>,
-L<Scalar::Util>, L<Data::Dumper>, L<Text::Templar::Parser>,
-L<Text::Templar::Exceptions>
+L<Class::Translucent|Class::Translucent>, L<IO::File|IO::File>,
+L<IO::Handle|IO::Handle>, L<Scalar::Util|Scalar::Util>,
+L<Data::Dumper|Data::Dumper>, L<Text::Templar::Parser|Text::Templar::Parser>,
+L<Text::Templar::Exceptions|Text::Templar::Exceptions>
 
 =head1 EXPORTS
 
@@ -74,7 +75,7 @@ reserved.
 
 This module is free software. You may use, modify, and/or redistribute this
 software under the terms of the Perl Artistic License. (See
-http://language.perl.com/misc/Artistic.html)
+L<http://language.perl.com/misc/Artistic.html>)
 
 =head1 DESCRIPTION
 
@@ -100,9 +101,7 @@ template objects.
 Template objects have a three-phase life cycle: parse phase, interaction phase,
 and rendering phase.
 
-=over 4
-
-=item Parse Phase
+=head3 Parse Phase
 
 The parse phase is entered when the C<load()> method is called, either
 explicitly or by passing a source file name to the C<new()> method. The template
@@ -111,9 +110,9 @@ controlling program. Directives parsed from the template source control the
 structure and behavior of the resultant object. If the template content fails to
 parse, an exception is generated which you may catch by wrapping the call to
 C<load()> in an C<eval BLOCK>, or by using the C<try>/C<catch> functions from
-the L<Text::Templar::Exception> module.
+the L<Text::Templar::Exception|Text::Templar::Exception> module.
 
-=item Interaction Phase
+=head3 Interaction Phase
 
 In this phase, the controlling program can insert data into the template object
 to (possibly) modify the final output. It does this by calling methods on the
@@ -121,15 +120,13 @@ template object with the desired data. Each such method acts as an appender,
 adding the specified input to a content array which is later accessed by the
 template object itself when it is rendered.
 
-=item Render Phase
+=head3 Render Phase
 
 After the controlling program finishes with the interaction phase, it can call
 the C<render()> method on the template object, which causes the template to
 return rendered content. Rendering is when the template actually does any
 processing it needs to do to turn the data given to it by the controlling
 program into text output.
-
-=back
 
 =head1 TEMPLATE DIRECTIVES
 
@@ -143,9 +140,7 @@ conditional tag.
 
 =head2 Directive Attributes
 
-=over 4
-
-=item B<name>
+=head3 name
 
 The directive name, which must begin with a letter, and consist of alphanumeric
 characters and underscores. A directive with a C<name> attribute will cause a
@@ -153,14 +148,15 @@ method of the same name to be created in the template object. Any data specified
 as an argument to this method will be made available to the directive at render
 time.
 
-=item B<codeblock>
+=head3 codeblock
 
 A Perl codeblock of the form:
 
- { <code> }
+  { <code> }
 
-The codeblock you specify will have access to any C<DEFINE>d variables as
-lexical scalars, and will also have at least the following constants defined:
+The codeblock you specify will have access to any L<DEFINE|"DEFINE Directive">d
+variables as lexical scalars, and will also have at least the following
+constants defined:
 
 =over 4
 
@@ -184,7 +180,7 @@ running.
 
 =back
 
-=item B<format>
+=head3 format
 
 A C<printf>-style format string which will be applied to each rendered element
 of the directive's content directly. The format should contain only one
@@ -193,7 +189,7 @@ formatting directive.
 See the documentation for the L<Perl printf function|perlfunc/"printf"> for
 details.
 
-=item B<methodchain>
+=head3 methodchain
 
 A chain of elements which can be method calls, hash element keys, or array
 indexes. The meaning of the element is decided by looking at the type of data it
@@ -229,36 +225,36 @@ to the methodchain:
 
   customer.orders.5.orderNumber
 
-=item B<quotedArgument>
+=head3 quotedArgument
 
 A quoted literal argument. You can use any style of quotes valid in Perl. Eg.,
 C<'John'>, C<"John">, C<q{John}>, C<qq/John/>, and C<qw#John#> are all
 equivalent.
 
-=item B<variable>
+=head3 variable
 
 A valid Perl variable name, with prepended type-indicator. Examples:
 
   $name
-
+  
   @includePath
-
+  
   %lookupTable
 
-=item B<path>
+=head3 path
 
 An absolute or relative Unix pathname. It must be quoted with any valid Perl
 quoting mechanism. Eg.,
 
   q{/www/templates/main.tmpl}
-
+  
   "/mnt/docs/My Documents/something"
 
-=item B<question>
+=head3 question
 
 A quoted string (any Perl quote), which is used as a prompt for the user.
 
-=item B<matchspec>
+=head3 matchspec
 
 A matching specification used in QUERY and conditional directives, which may be
 in one of three forms: a regular expression, an array of matches, or a hash
@@ -274,41 +270,37 @@ A hash matchspec specifies a hash of key-value pairs that act like
 abbreviations.  The keys are compared (stringwise) to candidate values, and if
 any match, the expanded version (the value) is returned.
 
-=item B<iterator>
+=head3 iterator
 
 For looping container constructs (FOREACH, MAP, GREP, SORT, and JOIN), you may
 specify the name of an iterator which is used as the name of the iterated value
 inside the loop. This name falls under the same constraints as the
-L<name|"name"> attribute, and only exists inside of the loop, much the same way
+L<"name"> attribute, and only exists inside of the loop, much the same way
 perl's C<local> works. If another named directive is contained in the same page,
 the iterator moves the old value out of the way prior to replacing it, and when
 the loop is finished, moves it back.
-
-=back
 
 =head2 Unitags
 
 A unitag is one directive by itself which possibly contains attributes that
 provide the specifics for that directive.
 
-=over 4
+=head3 METHOD directive
 
-=item B<METHOD directive>
+  <% METHOD <name> <codeblock> %>
+  <% METHOD <name> <format> %>
+  <% METHOD <name> %>
 
-	<% METHOD <name> <codeblock> %>
-	<% METHOD <name> <format> %>
-	<% METHOD <name> %>
-
-Creates a template method with the specified name, which when called, will
+Creates a template method with the specified L<"name">, which when called, will
 insert its arguments into the rendered output at any place the named directive
-appears. A method may appear with the same name more than once, in which case
+appears. A method may appear with the same L<"name"> more than once, in which case
 the arguments passed to the method appear in each place the method directive is
-defined. Methods may have an optional C<format> or C<codeblock> attribute.
+defined. Methods may have an optional L<"format"> or L<"codeblock"> attribute.
 
-The C<format> attribute is a C<printf>-style format string which is applied to
+The L<"format"> attribute is a C<printf>-style format string which is applied to
 each template value after it has been rendered.
 
-The C<codeblock> attribute is a Perl subroutine which acts as a preprocessor for
+The L<"codeblock"> attribute is a Perl subroutine which acts as a preprocessor for
 data that is given to the method. The subroutine is called once for each value
 that has been passed to the named method at render time, and any values it
 returns are inserted into the place the directive occupies. The subroutine is
@@ -321,10 +313,10 @@ In the template:
 
   <TITLE><% METHOD title %></TITLE>
   <P>The total number of dollars collected: $<% METHOD totalDollars '%05.2f' %></P>
-
+  
   <P><% METHOD pagelinks {
 	my ( $template, $node, $data ) = @_;
-
+    
 	return qq{[ <A href="$data->{href}">$data->{link}</A> ]};
   } %>
 
@@ -332,7 +324,7 @@ In the program:
 
   $template->title( "How the West Was Won" );
   $template->totalDollars( 15 );
-
+  
   $template->pagelinks({ href => 'pageone.html', link => 'Page One' });
   $template->pagelinks({ href => 'pagetwo.html', link => 'Page Two' });
   $template->pagelinks({ href => 'pagethree.html', link => 'Page Three' });
@@ -341,23 +333,23 @@ Would render as:
 
   <TITLE>How the West Was Won</TITLE>
   <P>The total number of dollars collected: $00015.00</P>
-
+  
   <A href="pageone.html">Page One</A>
   <A href="pagetwo.html">Page Two</A>
   <A href="pagethree.html">Page Three</A>
 
-=item B<METHODCALL directive>
+=head3 METHODCALL directive
 
-	<% METHODCALL <name> <methodchain> <format> %>
-	<% METHODCALL <name> <methodchain> %>
+  <% METHODCALL <name> <methodchain> <format> %>
+  <% METHODCALL <name> <methodchain> %>
 
-Creates a template method with the specified name. When the template is
+Creates a template method with the specified L<"name">. When the template is
 rendered, the specified method chain will be called on the data passed as
 arguments to the template method, and any return values are rendered and
 inserted in place of the directive. See the L<"methodchain"> attribute elsewhere
 in this document for more.
 
-Methodcall directives may have an optional format attribute.
+Methodcall directives may have an optional L<"format"> attribute.
 
 B<Examples:>
 
@@ -377,11 +369,11 @@ Rohe', and a balance of $1634.15, render as:
   <TITLE>Alfred Rohe's Account</TITLE>
   <P>Balance: $1634.15</P>
 
-=item B<DUMP directive>
+=head3 DUMP directive
 
-	<% DUMP <name> %>
+  <% DUMP <name> %>
 
-Creates a template method with the specified name. When the template is
+Creates a template method with the specified L<"name">. When the template is
 rendered, the specified value will be dumped as Perl code into the rendered
 output.
 
@@ -410,25 +402,25 @@ Would render looking something like:
             };
   </PRE>
 
-=item B<DEFINE directive>
+=head3 DEFINE directive
 
-	<% DEFINE <name> [=] <quotedArgument> %>
-	<% DEFINE <variable> [=] <quotedArgument> %>
-	<% DEFINE <name> [=] <codeblock> %>
-	<% DEFINE <variable> [=] <codeblock> %>
+  <% DEFINE <name> [=] <quotedArgument> %>
+  <% DEFINE <variable> [=] <quotedArgument> %>
+  <% DEFINE <name> [=] <codeblock> %>
+  <% DEFINE <variable> [=] <codeblock> %>
 
-The C<DEFINE> directive causes a template attribute with the name specified to
+The B<DEFINE> directive causes a template attribute with the L<"name"> specified to
 be defined. These attributes will thenceforth be available to any evaluated
-codeblock in the same template.
+L<"codeblock"> in the same template.
 
-The first directive attribute can either be a C<name>, in which case it is
-assumed to be a scalar value of the same name, or a C<variable>.
+The first directive attribute can either be a L<"name">, in which case it is
+assumed to be a scalar value of the same L<"name">, or a L<"variable">.
 
 The '=' part of the directive is syntactic sugar, and doesn't really cause
 anything different to happen.
 
-The second argument can be either a quoted string or a C<codeblock> to be
-evaluated. The result from the codeblock will be assigned to the defined
+The second argument can be either a quoted string or a L<"codeblock"> to be
+evaluated. The result from the L<"codeblock"> will be assigned to the defined
 attribute.
 
 After the template is parsed, you can access defined values through the
@@ -443,28 +435,28 @@ In the template:
   <% DEFINE bodyColor '#FFFFFF' %>
   <% DEFINE linkColor '#FF0000' %>
   <BODY bgcolor="<% EVAL $bodyColor %>" link="<% EVAL $linkColor %>">
-	<P>Parsed at: <% EVAL $parseTime %></P>
+  <P>Parsed at: <% EVAL $parseTime %></P>
   </BODY>
 
 In the program:
 
   $oldLinkColor = $template->getDefines( 'linkColor' );
-
+  
   # Set a new link color
   $template->setDefines( linkColor => '#00FF00' );
 
 Rendered, the template would look like:
 
   <BODY bgcolor="#FFFFFF" link="#00FF00">
-	<P>Parsed at: Mon Apr  3 15:43:40 2000</P>
+  <P>Parsed at: Mon Apr  3 15:43:40 2000</P>
   </BODY>
 
-=item B<STOP directive>
+=head3 STOP directive
 
-	<% STOP %>
+  <% STOP %>
 
-The C<STOP> directive indicates that the parser should stop rendering at the
-point at which it is encountered. Template content below the C<STOP> directive
+The B<STOP> directive indicates that the parser should stop rendering at the
+point at which it is encountered. Template content below the B<STOP> directive
 will be parsed, and will be reflected in the structure of the template object,
 but will not show up when rendered.
 
@@ -473,9 +465,9 @@ B<Examples:>
 In the template:
 
   This stuff will be rendered.
-
+  
   <% STOP %>
-
+  
   This stuff won't. But I can still <% DEFINE something = 'here' %>.
 
 In the program:
@@ -486,25 +478,25 @@ Would render as:
 
   This stuff will be rendered.
 
-=item B<EVAL directive>
+=head3 EVAL directive
 
-	<% EVAL <variable> <format> %>
-	<% EVAL <variable> %>
-	<% EVAL <codeblock> <format> %>
-	<% EVAL <codeblock> %>
+  <% EVAL <variable> <format> %>
+  <% EVAL <variable> %>
+  <% EVAL <codeblock> <format> %>
+  <% EVAL <codeblock> %>
 
 The C<EVAL> directive is used to insert a value in the template at the moment in
-which it is encountered. The value inserted can be either a C<variable> that is
-either C<DEFINE>d elsewhere, or one of the constants defined by the
-Text::Templar class itself (see the L<codeblock attribute|"codeblock"> for more
+which it is encountered. The value inserted can be either a L<"variable"> that is
+either L<"DEFINE">d elsewhere, or one of the constants defined by the
+Text::Templar class itself (see the L<"codeblock"> for more
 about the environment in which C<EVAL>s happen.
 
 B<Examples:>
 
 In the template:
 
-  Template:		<% EVAL $TEMPLATE_PATH %>
-  Parsed:		<% EVAL { scalar localtime } %>
+  Template:	  <% EVAL $TEMPLATE_PATH %>
+  Parsed:	  <% EVAL { scalar localtime } %>
 
 In the program:
 
@@ -515,9 +507,9 @@ Would render as:
   Template:		/www/templates/base.tmpl
   Parsed:		Mon Apr  3 16:01:53 2000
 
-=item B<INCLUDE directive>
+=head3 INCLUDE directive
 
-	<% INCLUDE <path> %>
+  <% INCLUDE <path> %>
 
 Parse and insert the specified template into the current template body.
 
@@ -527,31 +519,31 @@ In the template:
 
   <HTML>
   <HEAD>
-	<TITLE>The Page</TITLE>
-	<% INCLUDE /www/templates/metatags.incl %>
+  <TITLE>The Page</TITLE>
+  <% INCLUDE /www/templates/metatags.incl %>
   </HEAD>
   <BODY>Aha!</BODY>
   </HTML>
 
 In 'metatags.incl':
 
-	<META name="author" content="Bertrand Russell">
-	<META name="author-email" content="btrand@philosphers.org">
+  <META name="author" content="Bertrand Russell">
+  <META name="author-email" content="btrand@philosphers.org">
 
 Would render as:
 
   <HTML>
   <HEAD>
-	<TITLE>The Page</TITLE>
-	<META name="author" content="Bertrand Russell">
-	<META name="author-email" content="btrand@philosphers.org">
+  <TITLE>The Page</TITLE>
+  <META name="author" content="Bertrand Russell">
+  <META name="author-email" content="btrand@philosphers.org">
   </HEAD>
   <BODY>Aha!</BODY>
   </HTML>
 
-=item B<QUERY directive>
+=head3 QUERY directive
 
-	<% QUERY <name> <question> <matchspec> %>
+  <% QUERY <name> <question> <matchspec> %>
 
 Create and insert a query object into the template object. Query objects can be
 used to build interactive prompts, specify untainting tables, or to otherwise
@@ -566,20 +558,20 @@ In the template:
 In the program:
 
   my @queries = $template->queries;
-
+  
   foreach my $query ( @queries ) {
 	print $query->question;
 	chomp( my $response = <STDIN> );
 	redo unless $query->matchspec->matches( $response );
   }
 
-=item B<ENV directive>
+=head3 ENV directive
 
-	<% ENV <name> <format> %>
-	<% ENV <name> %>
+  <% ENV <name> <format> %>
+  <% ENV <name> %>
 
-This directive inserts the environment variable specified by C<name> into the
-rendered template output after being formatted by the optional C<format> string.
+This directive inserts the environment variable specified by L<"name"> into the
+rendered template output after being formatted by the optional L<"format"> string.
 
 B<Examples:>
 
@@ -591,9 +583,9 @@ Might render as:
 
   Mozilla (X11; I; Linux 2.0.32 i586)
 
-=item B<META directive>
+=head3 META directive
 
-	<% META	<name> <quotedArgument> %>
+  <% META  <name> <quotedArgument> %>
 
 Define metadata for the template. This can be used by the template creator to
 list template details which do not belong in the regular template attributes.
@@ -601,13 +593,13 @@ list template details which do not belong in the regular template attributes.
 B<Examples:>
 
   <% META template-author 'Michael Granger' %>
-  <% META rscid q$Id: Templar.pod,v 1.11 2001/12/31 21:02:57 deveiant Exp $>
+  <% META rscid q$Id: Templar.pod,v 1.14 2002/08/08 22:44:05 deveiant Exp $>
 
-=item B<INHERIT directive>
+=head3 INHERIT directive
 
-	<% INHERIT <name> %>
+  <% INHERIT <name> %>
 
-Inherit the content container with the specified C<name> from an enclosing
+Inherit the content container with the specified L<"name"> from an enclosing
 template, if it exists. This allows you to propagate content from a container
 template to the subtemplates that it contains.
 
@@ -636,8 +628,6 @@ Would render as:
   If you should wish to register before 10/15/1999, then the place
   to do so is: ...
 
-=back
-
 =head2 Container Tags
 
 Container tags are directives which operate on a chunk of the template
@@ -646,41 +636,51 @@ tag + attributes and a closing tag, just as in most markup languages. The
 closing tag is a tag of the same form, but without any attributes, and with
 either a '/' or an 'END ' prepended to the directive name.
 
-=over 4
+=head3 FOREACH directive
 
-=item B<FOREACH directive>
+  <% FOREACH <iterator> [IN] <name> <methodchain> %>
+  <% FOREACH <iterator> [IN] <name> %>
+  <% FOREACH <iterator> [IN] DEREF <name> <methodchain> %>
+  <% FOREACH <iterator> [IN] DEREF <name> %>
+  <% FOREACH PAIR <iterator> [IN] <name> %>
+  <% FOREACH PAIR <iterator> [IN] <name> SORTED BY_KEY %>
+  <% FOREACH PAIR <iterator> [IN] <name> SORTED BY_VALUE %>
+  <% FOREACH PAIR <iterator> [IN] <name> SORT [WITH] <codeblock> %>
+  <% FOREACH PAIR <iterator> [IN] <name> <methodchain> %>
+  <% FOREACH PAIR <iterator> [IN] <name> <methodchain> SORTED BY_KEY %>
+  <% FOREACH PAIR <iterator> [IN] <name> <methodchain> SORTED BY_VALUE %>
+  <% FOREACH PAIR <iterator> [IN] <name> <methodchain> SORT [WITH] <codeblock> %>
+  <% FOREACH <name> %>
 
-	<% FOREACH <iterator> [IN] <name> <methodchain> %>
-	<% FOREACH <iterator> [IN] <name> %>
-	<% FOREACH <iterator> [IN] DEREF <name> <methodchain> %>
-	<% FOREACH <iterator> [IN] DEREF <name> %>
-	<% FOREACH PAIR <iterator> [IN] <name> <methodchain> %>
-	<% FOREACH PAIR <iterator> [IN] <name> %>
-	<% FOREACH <name> %>
-
-The C<FOREACH> directive is an iterator directive for inserting a
+The C<FOREACH> directive is an L<"iterator"> directive for inserting a
 bit of content once for each item of a list.
 
-The first form calls the specified C<methodchain> on the C<name>d data, loops
-over each element of the return value, and inserts the contents contained within
-the opening and closing tags once for each iteration with the C<iterator> set to
-the current item. The 'C<IN>' is just syntactic sugar, and may be omitted.
+The first form calls the specified L<"methodchain"> on the L<"name">d data,
+loops over each element of the return value, and inserts the contents contained
+within the opening and closing tags once for each iteration with the L<"iterator">
+set to the current item. The 'C<IN>' is just syntactic sugar, and may be
+omitted.
 
-The second form does the same thing, but the C<name>d parameter is assumed to be
+The second form does the same thing, but the L<"name">d parameter is assumed to be
 the list of content to iterate over instead of data on which to apply a
-C<methodchain>.
+L<"methodchain">.
 
 The third and fourth forms do the same thing as the first and second form, but
-cause the C<name>d data to be dereferenced first. This is sometimes useful with
+cause the L<"name">d data to be dereferenced first. This is sometimes useful with
 nested FOREACH directives, where the outer loop may be iterating over an array
 of arrayrefs, for example.
 
-The fifth and sixth form are hash iterators. They expect a hash or hashref as
-the value of C<name>, or as the return value of the specified C<methodchain>
-called on the C<name>d object. It iterates over each key/value pair, setting
-C<iterator> to a hashref with C<key> and C<value> pairs.
+The fifth through twelfth forms are hash L<"iterator">s. They expect a hash or
+hashref as the value of L<"name">, or as the return value of the specified
+L<"methodchain"> called on the L<"name">d object. It iterates over each key/value
+pair, setting L<"iterator"> to a hashref with C<key> and C<value> pairs. The forms
+that include C<SORT> or C<SORTED> (either may be used interchangeably), sort by the
+given criteria; C<BY_KEY> causes the iteration to be sorted (stringwise) by each
+pair's C<key> element; C<BY_VALUE> does the same for each pair's C<value>
+element. The forms that specify a L<"codeblock"> act like the L<"codeblock"> of a
+L<"SORT">
 
-The fifth form iterates over the C<name>d list, using the C<name> as the
+The fifth form iterates over the L<"name">d list, using the L<"name"> as the
 iterator inside each loop.
 
 Inside the contents of a FOREACH directive, there is a defined variable
@@ -695,30 +695,30 @@ In the template:
 
   <B>Team batting averages:</B>
   <TABLE>
-	<TR>
-		<TH>Team Name</TH>
-		<TH>Batting Average</TH>
-	</TR>
-
+  <TR>
+	  <TH>Team Name</TH>
+	  <TH>Batting Average</TH>
+  </TR>
+  
   <% FOREACH team IN league getTeams %>
-	<TR>
-		<TD><% METHODCALL team name %></TD>
-		<TD><% METHODCALL team getBattingAverage %></TD>
-	</TR>
+  <TR>
+	  <TD><% METHODCALL team name %></TD>
+	  <TD><% METHODCALL team getBattingAverage %></TD>
+  </TR>
   <% END FOREACH %>
-
+  
   </TABLE>
-
+  
   <H2>The following links are related to this topic:</H2>
   <% FOREACH link %>
-	<P><A href="<% METHOD link %>"><% METHOD link %></A></P>
+  <P><A href="<% METHOD link %>"><% METHOD link %></A></P>
   <% /FOREACH %>
 
 In the program:
 
   my $league = lookup League 15;
   $template->league( $league );
-
+  
   my @links = qw{http://www.netscape.com/ http://www.leaguelink.com/ http://www.google.com/
                  http://slashdot.org/ http://www.linux.com/};
   $template->links( @links );
@@ -728,34 +728,34 @@ look like:
 
   <B>Team batting averages:</B>
   <TABLE>
-	<TR>
-		<TH>Team Name</TH>
-		<TH>Batting Average</TH>
-	</TR>
-
+  <TR>
+	  <TH>Team Name</TH>
+	  <TH>Batting Average</TH>
+  </TR>
+  
   <% FOREACH team IN league getTeams %>
-	<TR>
-		<TD>Argyle Argonauts</TD>
-		<TD>.175</TD>
-	</TR>
-	<TR>
-		<TD>Rawndee Redhawks</TD>
-		<TD>.333</TD>
-	</TR>
-	<TR>
-		<TD>Billings Bobcats</TD>
-		<TD>.285</TD>
-	</TR>
+  <TR>
+	  <TD>Argyle Argonauts</TD>
+	  <TD>.175</TD>
+  </TR>
+  <TR>
+	  <TD>Rawndee Redhawks</TD>
+	  <TD>.333</TD>
+  </TR>
+  <TR>
+	  <TD>Billings Bobcats</TD>
+	  <TD>.285</TD>
+  </TR>
   <% END FOREACH %>
-
+  
   </TABLE>
-
+  
   <H2>The following links are related to this topic:</H2>
-	<P><A href="http://www.netscape.com/">http://www.netscape.com/</A></P>
-	<P><A href="http://www.leaguelink.com/">http://www.leaguelink.com/</A></P>
-	<P><A href="http://www.google.com/">http://www.google.com/</A></P>
-	<P><A href="http://slashdot.org/">http://slashdot.org/</A></P>
-	<P><A href="http://www.linux.com/">http://www.linux.com/</A></P>
+  <P><A href="http://www.netscape.com/">http://www.netscape.com/</A></P>
+  <P><A href="http://www.leaguelink.com/">http://www.leaguelink.com/</A></P>
+  <P><A href="http://www.google.com/">http://www.google.com/</A></P>
+  <P><A href="http://slashdot.org/">http://slashdot.org/</A></P>
+  <P><A href="http://www.linux.com/">http://www.linux.com/</A></P>
 
 An example of hash iteration:
 
@@ -768,18 +768,29 @@ An example of hash iteration:
   <% END IF %>
   </SELECT>
 
-=item B<JOIN directive>
+The same iteration, but sorted by key:
 
-	<% JOIN <iterator> [IN] <name> <methodchain> [WITH] <quotedArgument> %>
-	<% JOIN <iterator> [IN] <name> [WITH] <quotedArgument> %>
-	<% JOIN <name> [WITH] <quotedArgument> %>
+  <SELECT name="team">
+  <% FOREACH PAIR team IN teams SORTED BY_KEY %>
+  <% IF team value %>
+    <OPTION value="<% METHODCALL team key %>" selected><% METHODCALL team key %></OPTION>
+  <% ELSE %>
+    <OPTION value="<% METHODCALL team key %>"><% METHODCALL team key %></OPTION>
+  <% END IF %>
+  </SELECT>
 
-The C<JOIN> directive acts like a C<FOREACH> iterator that joins the rendered
-output of each of its loops together with the string specified by the
-C<quotedArgument>.
+=head3 JOIN directive
+
+  <% JOIN <iterator> [IN] <name> <methodchain> [WITH] <quotedArgument> %>
+  <% JOIN <iterator> [IN] <name> [WITH] <quotedArgument> %>
+  <% JOIN <name> [WITH] <quotedArgument> %>
+
+The C<JOIN> directive acts like a L<FOREACH|"FOREACH Directive"> L<"iterator">
+that joins the rendered output of each of its loops together with the string
+specified by the L<"quotedArgument">.
 
 The operation of the join directive is otherwise the same as that for the
-C<FOREACH> directive.
+L<FOREACH|"FOREACH Directive"> directive.
 
 The words in brackets are syntactic sugar, and may be omitted.
 
@@ -788,63 +799,63 @@ B<Examples:>
 In the template:
 
   <% JOIN team IN league getTeams WITH q{, } %>
-	<A href="http://leaguelink.com/homepages/<% METHOD team url %>"><% METHOD team name %></A>
+  <A href="http://leaguelink.com/homepages/<% METHOD team url %>"><% METHOD team name %></A>
   <% END JOIN %>
 
 Might render something like this:
 
-	<A href="http://leaguelink.com/homepages/1024">Bruins</A>, 
-	<A href="http://leaguelink.com/homepages/768">Argonauts</A>,
-	<A href="http://leaguelink.com/homepages/512">Redhawks</A>,
-	<A href="http://leaguelink.com/homepages/256">Bobcats</A>
+  <A href="http://leaguelink.com/homepages/1024">Bruins</A>, 
+  <A href="http://leaguelink.com/homepages/768">Argonauts</A>,
+  <A href="http://leaguelink.com/homepages/512">Redhawks</A>,
+  <A href="http://leaguelink.com/homepages/256">Bobcats</A>
 
-=item B<SORT directive>
+=head3 SORT directive
 
-	<% SORT <iterator> [IN] <name> <methodchain> [WITH] <codeblock> %>
-	<% SORT <iterator> [IN] <name> [WITH] <codeblock> %>
-	<% SORT <name> [WITH] <codeblock> %>
+  <% SORT <iterator> [IN] <name> <methodchain> [WITH] <codeblock> %>
+  <% SORT <iterator> [IN] <name> [WITH] <codeblock> %>
+  <% SORT <name> [WITH] <codeblock> %>
 
 The C<SORT> directive is used to sort a content array, just as in Perl's C<sort>
 function.
 
-The first form calls the specified C<methodchain> on the C<name>d object and
-uses the C<codeblock> to sort the list. The two elements to be compared are
+The first form calls the specified L<"methodchain"> on the L<"name">d object and
+uses the L<"codeblock"> to sort the list. The two elements to be compared are
 passed as the first two arguments, or can be accessed as in Perl's sort with the
 variables C<$a> and C<$b>. A return value of less than zero indicates that the
 first argument should be sorted before the second, a return value of C<0>
 indicates that the two items are equal, and a return value of greater than zero
 indicates the second item should be sorted before the first. Once sorted, the
-array of values are assigned to the temporary C<iterator>, and the contents
+array of values are assigned to the temporary L<"iterator">, and the contents
 between the opening and closing C<SORT> tags is inserted once into the rendered
 output.
 
-The second form sorts in the same manner, but without a methodchain call on the
-C<name>d parameter.
+The second form sorts in the same manner, but without a L<"methodchain"> call on the
+L<"name">d parameter.
 
-The third form substitutes the sorted list for the specified name inside the
-contained content instead of using an C<iterator>.
+The third form substitutes the sorted list for the specified L<"name"> inside the
+contained content instead of using an L<"iterator">.
 
 The words in brackets are syntactic sugar, and may be omitted.
 
 B<Examples:>
 
-	<% SORT artistNames WITH { $a cmp $b } %>
-	<% SORT album IN collection albums WITH { $a->title cmp $b->title } %>
+  <% SORT artistNames WITH { $a cmp $b } %>
+  <% SORT album IN collection albums WITH { $a->title cmp $b->title } %>
 
-=item B<MAP directive>
+=head3 MAP directive
 
-	<% MAP <iterator> [IN] <name> <methodchain> [WITH] <codeblock> %>
-	<% MAP <name> [WITH] <codeblock> %>
+  <% MAP <iterator> [IN] <name> <methodchain> [WITH] <codeblock> %>
+  <% MAP <name> [WITH] <codeblock> %>
 
 The C<MAP> directive is used to apply some transform function to each element of
 an array, just as in Perl's C<map> function.
 
-The first form calls the specified C<methodchain> on the C<name>d object and
-executes the C<codeblock> for each element. It assigns the array of return
-values of the C<codeblock> calls to the temporary C<iterator>, and then inserts
+The first form calls the specified L<"methodchain"> on the L<"name">d object and
+executes the L<"codeblock"> for each element. It assigns the array of return
+values of the L<"codeblock"> calls to the temporary L<"iterator">, and then inserts
 the contents contained between the opening and closing tags once.
 
-The second form transforms the C<name>d content with the specified C<codeblock>
+The second form transforms the L<"name">d content with the specified L<"codeblock">
 and temporarily substitutes the transformed array for the original in the
 context of its beginning and end tags.
 
@@ -856,29 +867,29 @@ In the template:
 
   <!-- A Schwartzian Transform to sort players by first name -->
   <% MAP players {[ $_[0], $_[0]->name ]} %>
-	<% SORT players { $[0]->[1] cmp $_[1]->[1] } %>
+  <% SORT players { $[0]->[1] cmp $_[1]->[1] } %>
 	  <% MAP players { $_->[0] } %>
-		<% FOREACH player IN players %>
+	  <% FOREACH player IN players %>
 	  <% END MAP %>
-	<% END SORT %>
+  <% END SORT %>
   <% END MAP %>
 
-=item B<GREP directive>
+=head3 GREP directive
 
-	<% GREP <iterator> [IN] <name> <methodchain> [WITH] <codeblock> %>
-	<% GREP <name> [WITH] <codeblock> %>
+  <% GREP <iterator> [IN] <name> <methodchain> [WITH] <codeblock> %>
+  <% GREP <name> [WITH] <codeblock> %>
 
-The C<GREP> directive is used to modify a content array using C<codeblock> as a
+The C<GREP> directive is used to modify a content array using L<"codeblock"> as a
 filter function.
 
-The first form calls the specified C<methodchain> on the C<name>d object and
-executes the C<codeblock> for each element. If the C<codeblock> returns a true
+The first form calls the specified L<"methodchain"> on the L<"name">d object and
+executes the L<"codeblock"> for each element. If the L<"codeblock"> returns a true
 value, the value is retained and is added to the contents for the block. If it
 returns a false value, the item is omitted from the contents. Each retained item
-is added to the temporary C<iterator> array, and the contents of the tag are
+is added to the temporary L<"iterator"> array, and the contents of the tag are
 inserted once.
 
-The second form filters the C<name>d content with the specified C<codeblock>
+The second form filters the L<"name">d content with the specified L<"codeblock">
 and temporarily substitutes the filtered array for the original in the
 context of its beginning and end tags.
 
@@ -889,12 +900,12 @@ In the template:
   <!-- Eliminate teams who haven't registered from the list -->
   <P>Registered teams:</P>
   <% GREP teams IN league getTeams WITH { $_[0]->isRegistered } %>
-	<% FOREACH team IN teams %><% METHODCALL team name %><BR><% END FOREACH %>
+  <% FOREACH team IN teams %><% METHODCALL team name %><BR><% END FOREACH %>
   <% END GREP %>
 
-=item B<COMMENT directive>
+=head3 COMMENT directive
 
-	<% COMMENT %>
+  <% COMMENT %>
 
 The C<COMMENT> directive is used for inserting content into the template which
 do not affect the template object at all. Comments are stripped during
@@ -907,16 +918,16 @@ B<Examples:>
 In the template:
 
   <% COMMENT %>
-    Template RCSID: $Id: Templar.pod,v 1.11 2001/12/31 21:02:57 deveiant Exp $
+    Template RCSID: $Id: Templar.pod,v 1.14 2002/08/08 22:44:05 deveiant Exp $
   <% /COMMENT %>
-
+  
   <P>Something</P>
 
 Would render as:
 
   <P>Something</P>
 
-=item B<MAXLENGTH directive>
+=head3 MAXLENGTH directive
 
   <% MAXLENGTH <object> <methodchain> %>
   <% MAXLENGTH <integer> %>
@@ -926,9 +937,9 @@ Would render as:
 
 The C<MAXLENGTH> directive limits the character length of the rendered contents
 to the value specified, including spaces and newlines. The value may be
-specified in one of five ways: the result of a methodchain, a literal integer,
+specified in one of five ways: the result of a L<"methodchain">, a literal integer,
 the value passed to a method call, the result of a code block, or the value of a
-specified variable.
+specified L<"variable">.
 
 B<Examples:>
 
@@ -945,8 +956,6 @@ Would render as:
 
   <TD>Crimson Pe</TD>
 
-=back
-
 =head2 Conditional Tags
 
 Conditional tags are groups of directives which contain optional content
@@ -954,63 +963,59 @@ delimited, as with container directives, with the opening tag + attributes and a
 closing tag. The closing tag of any conditional block is an C<E<lt>% END
 IF %E<gt>> or C<E<lt>% /IF %E<gt>> tag.
 
-=over 4
+=head3 IF directive
 
-=item B<IF directive>
-
-	<% IF <name> %>
-	<% IF <name> [MATCHES] <matchspec> %>
-	<% IF <object> <methodchain> %>
-	<% IF <object> <methodchain> [AMTCHES] <matchspec> %>
-	<% IF <variable> %>
-	<% IF <variable> [MATCHES] <matchspec> %>
-	<% IF <codeblock> %>
+  <% IF <name> %>
+  <% IF <name> [MATCHES] <matchspec> %>
+  <% IF <object> <methodchain> %>
+  <% IF <object> <methodchain> [AMTCHES] <matchspec> %>
+  <% IF <variable> %>
+  <% IF <variable> [MATCHES] <matchspec> %>
+  <% IF <codeblock> %>
 
 The C<IF> directive without a C<MATCHES> clause evaluates the last-inserted
-content of the specified C<name>, the specified C<methodchain> of the
-last-inserted C<object>, or the specified C<codeblock> or C<variable> in its
+content of the specified L<"name">, the specified L<"methodchain"> of the
+last-inserted L<"object">, or the specified L<"codeblock"> or L<"variable"> in its
 attributes and includes the contained content if it evaluates to a true value.
 
 With a MATCHES clause, the contained content is included if B<all> of the
-content of the specified name, the specified C<methodchain> of the last-inserted
-C<object>, or the specified C<codeblock> or C<variable> match the
-C<matchspec>. If the C<matchspec> is a regexp, each item must match it, if the
-C<matchspec> is an array or a hash, each item must be equal (stringwise) to at
+content of the specified L<"name">, the specified L<"methodchain"> of the last-inserted
+L<"object">, or the specified L<"codeblock"> or L<"variable"> match the
+L<"matchspec">. If the L<"matchspec"> is a regexp, each item must match it, if the
+L<"matchspec"> is an array or a hash, each item must be equal (stringwise) to at
 least one of the items in the array or one of the keys of the hash.
 
 The words in brackets are syntactic sugar, and may be omitted.
 
-=item B<ELSE directive>
+=head3 ELSE directive
 
-	<% ELSE %>
+  <% ELSE %>
 
 The content contained after the C<ELSE> directive is executed if none of the
 conditional clauses before it have been true.
 
-=item B<ELSIF directive>
+=head3 ELSIF directive
 
-	<% ELSIF <name> %>
-	<% ELSIF <name> [MATCHES] <matchspec> %>
-	<% ELSIF <object> <methodchain> %>
-	<% ELSIF <object> <methodchain> [AMTCHES] <matchspec> %>
-	<% ELSIF <variable> %>
-	<% ELSIF <variable> [MATCHES] <matchspec> %>
-	<% ELSIF <codeblock> %>
+  <% ELSIF <name> %>
+  <% ELSIF <name> [MATCHES] <matchspec> %>
+  <% ELSIF <object> <methodchain> %>
+  <% ELSIF <object> <methodchain> [AMTCHES] <matchspec> %>
+  <% ELSIF <variable> %>
+  <% ELSIF <variable> [MATCHES] <matchspec> %>
+  <% ELSIF <codeblock> %>
 
 The content contained after the C<ELSIF> directive is executed if none of the
 conditional clauses before it have been true and the condition matches using the
-same rules as the C<IF> directive.
+same rules as the L<IF|"IF Directive"> directive.
 
 The words in brackets are syntactic sugar, and may be omitted.
-
-=back
 
 B<Examples:>
 
 In the template:
 
   <% IF shopName %><H1>Welcome to <% METHOD shopName %></H1><% END IF %>
-
+  
   <P>We are currently <% IF {
 		my $hour = (localtime)[2]; $hour < 19 && $hour > 6 } %>
 	open
@@ -1023,13 +1028,13 @@ In the template:
 Between 7 AM and 7 PM, or between 7 AM and 9 PM on Saturday would render as:
 
   <H1>Welcome to Binghjii's Bazaar of Wonder</H1>
-
+  
   <P>We are currently open.</P>
 
 and any other time would render as:
 
   <H1>Welcome to Binghjii's Bazaar of Wonder</H1>
-
+  
   <P>We are currently closed.</P>
 
 B<A more complex example:>
@@ -1039,6 +1044,7 @@ B<A more complex example:>
   <% ELSIF request connection.remote_host matches /internal\.net/ %>
     <P align="center"><A href="viewRequest">View this request</A></P>
   <% END IF %>
+
 
 =head1 FUNCTIONS
 
@@ -1084,11 +1090,9 @@ mechanism will notice and abandon the cached source. (Translucent method)
 
 =item I<cacheTrees( $boolean )>
 
-Get/set the attribute which turns syntax tree caching on or off. If this is
-set to a true value, the template object's syntax tree will be reused
-the next time it is loaded, skipping the parse phase altogether. Note
-that time-sensitive C<EVAL>s and the like will need to be placed into
-C<DELAYED> blocks if you are caching trees. (Translucent method)
+Get/set the attribute which turns syntax tree caching on or off. If this is set
+to a true value, the template object's syntax tree will be reused the next time
+it is loaded, skipping the parse phase altogether. (Translucent method)
 
 =item I<clear( undef )>
 
@@ -1128,16 +1132,17 @@ Remove and return the named values from the object's metafields hash.
 
 Get/set the errorOutput attribute. This attribute controls where the output
 from errors generated in the template object end up. Setting it to
-'C<stderr>' (the default) causes errors to be output on STDERR. Setting
-it to 'C<inline>' renders the errors as comments (see C<commentOpen()>
-and C<commentClose()>) into the output of the template at the place
-where they occur. If C<errorOutput()> is 'C<tailed>', the errors will be
-rendered as above, but they will occur at the end of the template's
-output. Setting C<errorOutput()> to 'C<ignore>' will cause errors to be
-ignored silently. Any other value is treated as the filename of some
-sort of log, and errors are piped to it as they occur. Setting this to a
-filename which cannot be opened results in a fatal exception being
-thrown. (Translucent method)
+'C<stderr>' (the default) causes errors to be output on STDERR. Setting it
+to 'C<inline>' renders the errors as comments (see C<commentOpen()> and
+C<commentClose()>) into the output of the template at the place where they
+occur. If C<errorOutput()> is 'C<tailed>', the errors will be rendered as
+more-detailed error stacktraces at the end of the template's output. A value
+of 'C<both>' means to use both C<inline> and C<tailed> output types. Setting
+C<errorOutput()> to 'C<ignore>' will cause errors to be ignored
+silently. Any other value is treated as the filename of some sort of log,
+and errors are piped to it as they occur. Setting this to a filename which
+cannot be opened results in a fatal exception being thrown. (Translucent
+method)
 
 =item I<filterSyntaxTree( \@nodes, $phaseName )>
 
@@ -1149,6 +1154,12 @@ exception on any error.
 
 Returns a hash of content that is the result of merging this template's
 content and any content inherited from containing templates
+
+=item I<getDefines( @defineNames )>
+
+Get the evaluated values of the defines specified. Returns the values if
+called in list context, and the number of defines returned in scalar
+context. Throw an exception on any error.
 
 =item I<getMetafields( @fieldNames )>
 
@@ -1493,16 +1504,16 @@ value. (Translucent method)
 Set the contents of the node specified to the given contents. Returns the
 number of elements after setting. Throws an exception on any error.
 
-=item I<shiftIncludePath( @directories )>
+=item I<shiftIncludePath( undef )>
 
 Remove and return the first element of the template include
 path. (Translucent method)
 
-=item I<shiftQueries( @nodes=Text::Templar::QUERY )>
+=item I<shiftQueries( undef )>
 
 Remove and return the first element of the query list. (Translucent method)
 
-=item I<shiftSyntaxTree( @nodes=Text::Templar::node )>
+=item I<shiftSyntaxTree( undef )>
 
 Remove and return the first element of the syntax tree. (Translucent method)
 
@@ -1541,7 +1552,7 @@ Removes the nodes specified by offset and length from the query list,
 replacing them with the new nodes, if specified. This method works
 similarly to Perl's C<splice()>. (Translucent method)
 
-=item I<spliceSyntaxTree( $offset, $length,@newnodes=Text::Templar::node )>
+=item I<spliceSyntaxTree( $offset, $length, @newnodes=Text::Templar::node )>
 
 Removes the nodes specified by offset and length from the syntax tree,
 replacing them with the new nodes, if specified. This method works
@@ -1586,14 +1597,6 @@ Constructs and returns a new template object. If the optional sourceFileName
 or sourceArray argument is specified, the template content is parsed. If
 the optional configHash contains any key-value pairs, the per-object
 attributes specified are set. Throws an exception on any error.
-
-=back
-
-=head2 Overridden Methods
-
-=over 4
-
-=item I<getDefines( @defineNames ) ### Get the evaluated values of the defines specified. Returns the values if ###		called in list context, and the number of defines returned in scalar ###		context. Throw an exception on any error.>
 
 =back
 
@@ -1653,6 +1656,15 @@ Builds and returns a comment in the manner defined by the object's
 commentOpen and commentClose attributes. Throws an exception on any
 error.
 
+=item I<_buildHashIteratedContent( $node, @content )>
+
+Attempt to build a list of hashrefs with key and value pairs for hash
+iterators.
+
+=item I<_buildIteratedContent( $node )>
+
+Build a list of content that will be iterated over out of the given I<node>.
+
 =item I<_depth( @args )>
 
 Get/set the current include depth. (Translucent method)
@@ -1670,14 +1682,13 @@ method)
 
 =item I<_evaluateCondition( $node )>
 
-Evaluate the matchSpec associated with the given node with the node's
+Evaluate the L<"matchspec"> associated with the given node with the node's
 content, returning '1' if the condition is true, and the empty list if
 it is not.
 
 =item I<_findFile( $filename )>
 
 Given a possibly relative filename, attempt to figure out an absolute one
-
 and return it.
 
 =item I<_getEvaluatedValue( $code )>
@@ -1753,7 +1764,7 @@ list. (Translucent method)
 Add the specified exceptions on to the end of the tailed error list. Returns the
 total number of exceptions after adding. (Translucent method)
 
-=item I<_shiftTailedErrors( @exceptions=Text::Templar::Exception )>
+=item I<_shiftTailedErrors( undef )>
 
 Remove and return the first element of the tailed exception list.
 (Translucent method)
@@ -1777,7 +1788,7 @@ rendered output. (Translucent method)
 
 =item I<_traverseMethodChain( $object, \@methodChain=Text::Templar::method )>
 
-Traverse each element in a methodchain, calling a method or fetching a value
+Traverse each element in a L<"methodchain">, calling a method or fetching a value
 from a reference for each one.
 
 =item I<_unshiftTailedErrors( @exceptions=Text::Templar::Exception )>
@@ -1788,7 +1799,7 @@ list. Returns the number of exceptions in the list after adding.
 
 =back
 
-=head2 Protected Static Methods
+=head2 Protected Class Methods
 
 =over 4
 
@@ -1797,6 +1808,12 @@ list. Returns the number of exceptions in the list after adding.
 Get the parser object for parsing templar templates. Constructs a new parser
 if necessary. Return the parser object, and throws an exception on any
 error.
+
+=back
+
+=head2 Protected Static Methods
+
+=over 4
 
 =item I<_Parser( $newParser=Text::Templar::Parser )>
 

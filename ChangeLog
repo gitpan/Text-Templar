@@ -1,0 +1,1238 @@
+2002-08-08 14:28  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.11):
+
+	Updated requirement for Class::Translucent to include bugfixed version
+	
+2002-08-08 10:04  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar/.cvsignore (1.1):
+
+	Initial commit.
+	
+2002-08-08 10:03  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/foreachtest.tmpl (2.8):
+
+	- Removed deprecated (and useless) DELAYED directive.
+	
+	- Added tests for hashpair sorting.
+	
+2002-08-08 10:02  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: include.t (2.3), templates/include.incl (2.1),
+	templates/include2.incl (2.1), templates/includetest.tmpl (2.1):
+
+	- Added tests for the template variable ($TEMPLATE_PATH, etc.) bugfix.
+	
+2002-08-08 10:01  Michael Granger <ged@FaerieMUD.org>
+
+	* t/foreach.t (2.10):
+
+	- Fixed stupid reliance on hash sort order exposed by Perl 5.8. Thanks to "Josts
+	  Smokehouse" <Jost.Krieger+smokeback@ruhr-uni-bochum.de> for the bug report.
+	
+	- Added tests for hashpair sorting.
+	
+2002-08-08 09:58  Michael Granger <ged@FaerieMUD.org>
+
+	* t/delay.t (2.3):
+
+	- Added code to test deprecation warning.
+	
+2002-08-08 09:57  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar/Exceptions.pm (1.8), pod/Templar.pod (1.13):
+
+	- Fixed 'v-string in use/require non-portable' warning with Perl 5.8
+	
+2002-08-08 09:55  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.40):
+
+	- Fixed 'v-string in use/require non-portable' warning with Perl 5.8
+	
+	- Fixed top-level error handling bug.
+	
+	- Fixed include bug that wiped out template-local variables with those from the
+	  included template, eg., $TEMPLATE_PATH. As a side-effect, INCLUDEd templates
+	  now act mostly like template objects that were set in a METHOD. This may
+	  require adding INHERIT directives to included templates which bring their own
+	  unique METHODs.
+	
+	- Split iteration out of renderFOREACH() into a separate method:
+	  _buildIteratedContent(). This will not only allow iteration to be overridable
+	  without overriding the mechanics of FOREACH, but cleans up the code a great
+	  deal.
+	
+	- Added hash-iteration sorting.
+	
+	- Added code to strip '--' from comments, as they aren't allowed in X?HTML
+	  comments. This is decidedly not the best way to do things, but it will work
+	  for the general case without wreaking too much havoc on non-HTML
+	  text-generation.
+	
+	- Added coderef-caching to the codeblock node type.
+	
+	- Added a hashpairsort node type to support FOREACH PAIR ... SORT
+	
+2002-08-08 04:19  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.19):
+
+	- Added optional sorting syntax to 'FOREACH PAIR' hash iterator.
+	
+	- Added supporting production 'hashpairsort' and some terminals to support
+	  sorting syntax.
+	
+2002-08-08 04:16  Michael Granger <ged@FaerieMUD.org>
+
+	* misc/checkparser.pl (1.1):
+
+	Initial commit.
+	
+2002-05-10 10:51  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.12):
+
+	- Synched docs with module.
+	
+2002-05-10 10:51  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar/Exceptions.pm (1.7):
+
+	- Added a two-arg error-generating constructor form to EvalError.
+	
+2002-05-10 10:50  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.39):
+
+	- Normalized and updated comments/docs
+	
+	- Made the recursion depth not a translucent attribute to increase speed,
+	  sanity.
+	
+	- Fixed up lots of problems with error handling.
+	
+	- Added a 'both' mode for errorOutput that does both 'inline' and 'tailed'.
+	
+	- Fixed up methodchaining in _traverseMethodChain() to allow using an index on a
+	  return value of a method that returns a list.
+	
+	- Added more granular error-checking to _traverseMethodChain() to make errors
+	  that come out of it make sense in the context of the template instead of just
+	  in the context of the eval for that chain loop.
+	
+	- Fixed a warning in the buildArray() method of the 'method' node class.
+	
+2002-05-10 10:45  Michael Granger <ged@FaerieMUD.org>
+
+	* t/conditional.t (1.7):
+
+	Made comments actually reflect test numbers.
+	
+2002-05-10 10:44  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: erroroutput.t (2.1), templates/erroroutput.tmpl (2.1):
+
+	Initial release
+	
+2002-01-17 06:37  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.38):
+
+	- Fixed a bug in clear() -- defines are now reset as well.
+	
+2001-12-31 15:45  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.10):
+
+	- Updated tag template from rx.y to release_x.y
+	
+2001-12-31 15:41  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.9, r2_37):
+
+	CPAN Release 2.37
+	
+2001-12-31 15:17  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.8):
+
+	- Undid stupid version-checking change. The version of the distro *should*
+	  reflect the version of the main module. I should perhaps use branches to do
+	  incremental commits before packaging them up for CPAN.
+	
+2001-12-31 14:36  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.7):
+
+	- Distribution version no longer tracks Templar.pm version to avoid version gaps
+	  because of CVS commits.
+	
+2001-12-31 14:30  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar/Exceptions.pm (1.6, r2_37):
+
+	- Removed useless depth-setting line.
+	
+2001-12-31 14:29  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.37, r2_37):
+
+	- Fixed method call in renderFOREACH that was passing a simple scalar instead of
+	  a node object.
+	
+2001-12-31 14:03  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: foreach.t (2.9), templates/foreachtest.tmpl (2.7) (utags:
+	r2_37):
+
+	- Added tests for FOREACH PAIR
+	
+2001-12-31 14:02  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.11, r2_37):
+
+	- Added FOREACH PAIR documentation
+	
+2001-12-31 14:01  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar/Exceptions.pm (1.5):
+
+	- Added 3-arg ParamError constructor.
+	
+2001-12-31 14:00  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.36):
+
+	- Added FOREACH PAIR and FOREACH PAIR <name> for hash iteration
+	
+	- Changed all the inheritance of node classes back to use @ISA instead of use
+	  base.
+	
+2001-12-31 13:53  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.18, r2_37):
+
+	- Added FOREACH PAIR and FOREACH PAIR <name> for hash iteration
+	
+	- Removed the sourceName bit from the error-generation, which didn't work so
+	  well anyway.
+	
+2001-11-29 15:46  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar/Exceptions.pm (1.4):
+
+	- Fleshed out documentation.
+	
+2001-11-29 15:45  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.17), t/methodcall.t (2.3, r2_37),
+	t/templates/methodcalltest.tmpl (2.2, r2_37):
+
+	- Fixed array-index bug in METHODCALL (Thanks to Michael Wojcikiewicz
+	  <wojo@booyaka.com>)
+	
+2001-11-29 15:43  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.6):
+
+	- Corrected install targets in PM
+	
+2001-11-14 18:25  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.5):
+
+	- Modified to support new directory layout.
+	
+2001-09-24 17:13  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.35):
+
+	- Removed unused variable from declaration.
+	
+2001-09-24 17:12  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.10):
+
+	- Changed all the C<>-quoted modules to L<>-ed ones.
+	
+2001-09-24 17:12  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar/Exceptions.pm (1.3):
+
+	- Fixed transposed anglebrackets in AUTHOR section of POD.
+	
+2001-09-24 17:11  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.16):
+
+	- Switched precedence of quotedValue over quoted regex
+	
+2001-07-09 12:32  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.9):
+
+	- Documented the changes to the "path" directive attribute.
+	
+2001-07-09 12:31  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.34):
+
+	- Corrected the "signature" for the shift*() translucent methods
+	
+2001-06-19 21:49  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.15):
+
+	- Fixed bug which caused included 'path' productions to never match quotelikes,
+	  as the regex which came before it matched quotelikes, too.
+	
+2001-06-19 21:48  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.33):
+
+	- Cleaned up and corrected _findFile() method, not getting or searching the
+	  include path if the file path is absolute.
+	
+2001-06-12 08:14  Michael Granger <ged@FaerieMUD.org>
+
+	* README (2.4, r2_37):
+
+	- Touched up documentation in preparation for uploading to CPAN.
+	
+2001-06-06 09:40  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.4):
+
+	- Added comment header.
+	
+2001-06-06 09:06  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.3):
+
+	Forcing revision increment
+	
+2001-06-06 09:05  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: cache.t (2.2, r2_37), comment.t (2.3, r2_37), conditional.t
+	(1.6, r2_37), define.t (2.3, r2_37), delay.t (2.2, r2_37), env.t
+	(2.1, r2_37), eval.t (2.2, r2_37), foreach.t (2.8), grep.t (2.3,
+	r2_37), include.t (2.2, r2_37), inherit.t (1.2, r2_37), join.t
+	(2.3, r2_37), map.t (2.3, r2_37), maxlength.t (1.2, r2_37), meta.t
+	(2.2, r2_37), method.t (2.1, r2_37), methodcall.t (2.2), query.t
+	(2.1, r2_37), sort.t (2.3, r2_37), stop.t (2.1, r2_37):
+
+	- Removed another dependency on Exception.pm (thanks to Jeremiah Chase
+	  <phaedrus@FaerieMUD.org>).
+	
+2001-05-28 14:12  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.8):
+
+	- Updated REQUIRES section to 5.6, as that's what I test with now.
+	
+2001-05-28 14:06  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.7):
+
+	- Cleanup and update autodocs for CPAN
+	
+2001-05-28 14:05  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.32), lib/Text/Templar/Exceptions.pm (1.2),
+	grammar (2.14):
+
+	- Cleanup for CPAN
+	
+2001-05-28 13:39  Michael Granger <ged@FaerieMUD.org>
+
+	* README (2.3):
+
+	- Added description and caveat sections.
+	
+2001-05-14 01:21  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.31):
+
+	- Modified behaviour to allow setting of content for which nodes have not been
+	  declared to correct inheritance behaviour. This was needed because inheritance
+	  of a node sometimes has not happened yet at the time of the node's method
+	  being called.
+	
+2001-05-12 12:17  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.30):
+
+	- Removed some lingering dependencies on external Exception module.
+	
+2001-04-23 18:52  Michael Granger <ged@FaerieMUD.org>
+
+	* t/conditional.t (1.5):
+
+	- Turned off debugging output.
+	
+2001-04-23 18:51  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: conditional.t (1.4), templates/conditionaltest.tmpl (1.2,
+	r2_37):
+
+	- Added tests for matchspec-style directives
+	
+2001-04-23 18:50  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.13):
+
+	- Added matchspec-style conditionals
+	
+2001-04-23 18:49  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Parser.pod (2.2, r2_37):
+
+	- Updated copyright statement.
+	
+2001-04-23 18:49  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.6):
+
+	- Updated requires list to exclude the now-internal Exception classes, and
+	  changed the Text::Templar::Parser reference to Parse::RecDescent.
+	
+	- Added entries/examples for DUMP and matchspec-style conditionals.
+	
+	- Updated method/function docs.
+	
+	- Rewrote some stuff for clarity and fixed some typos.
+	
+2001-04-23 18:42  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.29):
+
+	- Factored out conditional code into a method called _evaluateCondition()
+	
+	- Added matchspec conditionals (IF condition MATCHES matchspec)
+	
+	- Moved matchspec classes under a new parent class (subclass of subnode) called
+	  T::T::matchnode
+	
+2001-04-23 18:37  Michael Granger <ged@FaerieMUD.org>
+
+	* README (2.2):
+
+	- Updated requirements to include the bugfixed Class::Translucent
+	
+2001-04-23 01:42  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.28):
+
+	Forced update to revision that was in effect before CVS disaster.
+	
+2001-04-23 01:39  Michael Granger <ged@FaerieMUD.org>
+
+	* t/comment.t (2.2):
+
+	- Minor comment fix
+	
+2001-04-23 01:38  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.12):
+
+	- Added DUMP directive
+	
+2001-04-23 01:38  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Parser.pod (2.1):
+
+	- Corrected silly spelling and grammar mistakes.
+	
+2001-04-23 01:34  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.26):
+
+	- Replaced external exception class with an internal class to avoid dependency
+	  on a non-CPANable module (there's already an Exception).
+	
+	- Content node is now added at INHERIT as well as an inheritedNode.
+	
+	- Added new directive 'DUMP' which calls Data::Dumper->Dumpxs() on the value/s.
+	
+	- Cleaned up and rewrote parts of JOIN to use traverseMethodChain() instead of
+	  doing it itself.
+	
+	- Added an $ITERATION and $LAST_ITERATION define for iteration directives (ie.,
+	  FOREACH and friends).
+	
+	- Cleaned up the file-finding code
+	
+2001-04-23 00:52  Michael Granger <ged@FaerieMUD.org>
+
+	* README (2.1), lib/Text/Templar/Exceptions.pm (1.1):
+
+	Initial release
+	
+2001-04-23 00:51  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.2):
+
+	- Removed dependence on separate exception module.
+	
+2000-08-23 19:01  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.5):
+
+	/ Fixed erroneous 'head3' directives.
+	+ Added INHERIT directive docs
+	/ A couple of miscellaneous fixes
+	
+2000-08-23 18:58  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.25):
+
+	+ Added a 'no warnings' block around the two methods which override their
+		Class::Translucent counterparts to eliminate the 'Subroutine x redefined...'
+		warnings.
+	/ Bumped up requirements to v5.6
+	
+2000-08-23 18:54  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.1):
+
+	+ Added prerequisites section and a perl version requirement
+	
+2000-08-16 16:19  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.24):
+
+	/ Fixed a bug in the bugfix for _getEvaluatedValue(). Doh!
+	
+2000-08-16 15:58  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.23):
+
+	/ Fixed a bug in _getEvaluatedValue() which caused an erroneous exception to be thrown
+		when the first argument is present but doesn't evaluate to a true value.
+	
+2000-08-01 20:33  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.22):
+
+	+ Fixed bug in _traverseMethodChain() that misreported the value being tested
+		when the thing returned from a spot in the middle of a methodchain is not
+		an arrayref, a hashref, or an object.
+	
+2000-07-19 13:28  aino
+
+	* lib/Text/Templar.pm (2.21):
+
+	Added  define to renderFOREACH method
+	
+2000-07-13 16:03  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.4):
+
+	+ Added lots more docs on new syntax and bugfixed stuff.
+	
+2000-07-13 15:53  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.20):
+
+	/ Fixed a bug in the iterator name define that caused 'FOREACH object'-style FOREACHes
+		to set the iterator define to the undefined value
+	/ Moved some more code over to use _traverseMethodChain() instead of doing it all itself.
+	/ Changed the sense of methodchain conditional evaluation in an IF clause
+	
+2000-06-22 19:20  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.11):
+
+	+ Added a new directive, MAXLENGTH, which truncates the rendered results of its
+		contained nodes to a given length. (Suggested by Travis LaWall
+		<travis.lawall@active.com>
+	
+2000-06-22 19:18  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.19):
+
+	+ Added support and trivial node class for the new MAXLENGTH directive
+	
+	/ Modified JOIN to use traverseMethodChain(). Still need to do MAP, GREP, SORT, etc.
+	
+	/ Fixed a bug in traverseMethodChain(). I was only returning the last value,
+		when I meant to be returning the entire result set of the last call.
+	
+2000-06-22 19:15  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: maxlength.t (1.1), templates/maxlengthtest.tmpl (1.1, r2_37):
+
+	Initial release
+	
+2000-06-20 20:51  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: foreach.t (2.7), templates/foreachtest.tmpl (2.6):
+
+	+ Added test for deref methodchain syntax
+	
+2000-06-20 20:49  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.18):
+
+	/ Fixed a bug in AUTOLOAD which caught method calls to template content methods
+		that contained the words 'render' or 'preprocess'. Should eventually put in
+		warning code that catches names which match directive processing methods
+	
+	/ Fixed the try block in filterSyntaxTree() to propagate recursion errors
+		instead of silently inserting them into the filtered tree
+	
+	+ Added an error-condition check to catch non-nodes which show up in the syntax
+		tree when checking to see if a node needs a chomp or not
+	
+	/ COMPAT: Modified EVAL and ENV directives to only be processed at render time
+	
+	/ Moved method chain traversal out into a protected _traverseMethodChain()
+		method to facilitate adding it to directives
+	
+	/ Made a _deref() method for much the same reason
+	
+	/ Modified methodchain trivial node class to understand array deref in addition
+		to hash deref
+	
+2000-06-20 20:42  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.10):
+
+	+ Added 'FOREACH name IN DEREF object methodchain' syntax
+	
+2000-06-14 00:35  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: methodcall.t (2.1), templates/foreachtest.tmpl (2.5),
+	templates/methodcalltest.tmpl (2.1):
+
+	+ Added test for mixed deref
+	
+2000-06-14 00:33  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: inherit.t (1.1), templates/inheritChild.tmpl (1.1, r2_37),
+	templates/inheritParent.tmpl (1.1, r2_37):
+
+	Initial release
+	
+2000-06-14 00:33  Michael Granger <ged@FaerieMUD.org>
+
+	* t/foreach.t (2.6):
+
+	+ Added test for 'DEREF'
+	
+2000-06-14 00:28  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.9):
+
+	+ Added new directive 'INHERIT'.
+	
+	+ Added new variant of FOREACH that does explicit deref of its 'object' arg
+	
+2000-06-14 00:24  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.17):
+
+	+ Added code and a trivial node class to support content node inheritance for
+		new directive 'INHERIT'.
+	
+	+ Added code to support explicit dereference of object arguments to
+		FOREACH. DEREF should eventually be propagated to other directives with
+		'object' arguments, as well.
+	
+	+ Added exception-handling code to filterSyntaxTree() to filter off exceptions
+		which appear in the syntax tree.
+	
+	/ Modified METHODCALL to allow mixed hash deref and method invocation in a
+		single directive. This will allow methods to be invoked on objects within an
+		array of hashrefs, for example.
+	
+2000-06-11 13:23  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: conditional.t (1.3), templates/conditionaltest.tmpl (1.1):
+
+	Initial revision
+	
+2000-06-11 13:22  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.8):
+
+	+ Added new syntax for method and methodchain conditionals
+	
+2000-06-11 13:21  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.3):
+
+	+ Added docs for new conditional syntax (methods/methodchains)
+	+ Added docs for FOREACH's ITERATION variable
+	
+2000-06-11 13:20  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.16):
+
+	+ Added code to support new conditional syntax (methods/methodchains)
+	
+2000-06-06 19:08  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.2):
+
+	/ Updated.
+	
+2000-06-06 19:05  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.15):
+
+	- Removed spurious errorOutput() documentation.
+	
+2000-06-06 19:03  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.14):
+
+	+ Tweaked METHODCHAIN to allow plain hashrefs as arguments in addition to
+		objects.
+	
+2000-06-06 18:51  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.7):
+
+	/ Fixed pattern to not overflow stack when matching more than 16k characters
+		in a literal chunk.
+	
+2000-05-26 13:41  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.6):
+
+	/ Fixed a bug that was stripping inner braces from codeblocks (Thanks Tim.Falzone@Active.com)
+	
+2000-05-26 13:36  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.13):
+
+	+ Added a clear() method to clear all dynamic data from a template object
+		so that it can be reused.
+	
+2000-05-23 17:01  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.12):
+
+	+ Added an attribute/method undefinedValue(), which determines what value
+		is inserted when an undefined value is encountered.
+	/ Fixed a bug in conditionals code that was incorrectly testing for ELSE and
+		ELSIF node objects.
+	+ Turned off strict and warnings inside evaled codeblocks
+	/ Modified rendered raw hashes to look more perl-like
+	
+2000-05-23 16:54  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: foreach.t (2.5), templates/foreachtest.tmpl (2.4):
+
+	+ Modified tests to exercise the even/odd even thingie.
+	
+2000-05-23 16:53  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.5):
+
+	/ Modified to use a separate production for argument lists that should be
+		quoted.
+	
+2000-04-08 12:20  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: foreach.t (2.4), join.t (2.2), templates/foreachtest.tmpl
+	(2.3), templates/jointest.tmpl (2.2, r2_37):
+
+	+ Added tests for new syntax forms
+	
+2000-04-08 12:19  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.4):
+
+	+ Added additional, prettier syntaxes for looping constructs
+	
+2000-04-08 12:18  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Templar.pod (1.1):
+
+	First draft, moved out of the module
+	
+2000-04-08 12:16  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.11):
+
+	/ Moved POD docs into Templar.pod
+	/ Fixed bug in getDefines() which treated non-existant defines incorrectly
+	+ Added support for new pretty iterator syntaxes
+	+ Added $a and $b variables to SORT closures to make them more like Perl's
+	
+2000-03-20 13:27  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.10):
+
+	+ Added some trivial node classes documentation
+	
+	+ Added docs for the new missingMethodIsFatal() method.
+	
+2000-03-20 12:22  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.9):
+
+	/ Fixed bug in tailed exceptions code which was trying to stringify an already
+		stringified exception.
+	
+	/ Added a kluge for ParamError exception in parseSyntaxTree(). This really
+		should be fixed in Exception::ParamError.
+	
+	/ Fixed inconsistencies when dealing with subnodes. Was treating them sometimes
+		like arrayrefs, and sometimes not.
+	
+	/ Fixed a bug in the way the results of a codeblock were dealt with. Codeblocks
+		can now return a list without fear of it being used in scalar context.
+	
+	/ Fixed a bug in the special $ITERATION define in FOREACH containers. It wasn't
+		being incremented in renderFOREACH().
+	
+	/ Fixed a bug in renderFOREACH() which caused the special $<name> define to
+		unexpectedly be an array ref.
+	
+	/ Removed unnecessary re-rendering of rendered tree in renderJOIN()
+	
+	+ Added code to avoid trying to use a non-coderef as a coderef in
+		_getEvaluatedValue().
+	
+	+ Added code to append tailed errors to the rendered output when inlining
+		exceptions
+	
+	/ Modified inlining to just include the exception's message instead of the whole
+		stacktrace in the inlined comment.
+	
+	/ Fixed a bug in containernode::subnodes() which leaving the node corrupt after
+		calling subnodes() as a set operation.
+	
+	+ Added code to codeblock::content() to strip the enclosing '{}' from the
+		returned code.
+	
+2000-03-18 18:26  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.8):
+
+	+ Added an attribute and docs for 'missingMethodIsFatal', which governs the
+		object's reaction to calls on methods which don't have a corresponding node
+		defined.
+	
+2000-03-17 13:37  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: grep.t (2.2), join.t (2.1), map.t (2.2), sort.t (2.2),
+	templates/greptest.tmpl (2.2, r2_37), templates/jointest.tmpl
+	(2.1), templates/maptest.tmpl (2.1, r2_37), templates/sorttest.tmpl
+	(2.1, r2_37):
+
+	/ Added new aggregate object iterator tests
+	
+2000-03-17 13:36  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.7):
+
+	/ Finished adding new aggregate object iterator syntax
+	
+2000-03-17 11:55  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: foreach.t (2.3), templates/foreachtest.tmpl (2.2):
+
+	/ Modified to expose the (now-fixed) extra-chomp bug.
+	
+2000-03-17 09:44  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/greptest.tmpl (2.1):
+
+	+ Added test for new object aggregate syntax
+	
+2000-03-17 09:43  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.6), grammar (2.3):
+
+	+ Partially added support for list operators to access object aggregates.
+		*** UNFINISHED ***
+	
+2000-03-17 00:09  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: foreach.t (2.2), templates/foreachtest.tmpl (2.1):
+
+	+ Added new test for aggregate object FOREACH syntax
+	
+2000-03-17 00:09  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.2):
+
+	+ Added new FOREACH syntax to support iterating over aggregate objects returned
+		from object method invocations
+	
+2000-03-17 00:08  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.5):
+
+	+ Added new FOREACH syntax to support iterating over aggregate objects returned
+		from object method invocations
+	/ Fixed a bug which caused parseArray() to fail.
+	
+2000-03-14 13:30  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.4):
+
+	/ Moved chomp flag into continue block in filterSyntaxTree()
+	/ Fixed double chomp bug in literal class
+	
+2000-03-13 11:13  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: define.t (2.2), templates/definetest.tmpl (2.1, r2_37):
+
+	+ Added test for the new-style defines
+	
+2000-03-13 11:11  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.3):
+
+	/ Fixed a bug in getDefines() that incorrectly tried to eval non-scalar data
+		when compiling the list of return values
+	
+2000-03-13 10:44  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (2.1):
+
+	+ Added a new DEFINE tag contents type: <name> <codeblock>, and <variable>
+		<codeblock>
+	
+2000-03-13 10:42  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.2):
+
+	/ Modified renderFOREACH() to define an '$ITERATION' variable that is
+		incrememented every iteration to provide rowcount to the code executing in
+		the loop.
+	
+	+ Added code to support the new DEFINE <name> <codeblock> syntax
+	
+	/ Modified _buildClosure() to allow for complex datatype defines
+	
+2000-03-09 18:17  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: cache.t (2.1), comment.t (2.1), define.t (2.1), delay.t
+	(2.1), eval.t (2.1), foreach.t (2.1), grep.t (2.1), include.t
+	(2.1), map.t (2.1), meta.t (2.1), sort.t (2.1),
+	templates/cachetest.tmpl (1.1, r2_37):
+
+	/ Modified test suite to not expect extra blanks in rendered output
+	
+	+ Added a caching test script
+	
+2000-03-09 18:15  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (2.1):
+
+	/ Changed name of maxDepth attribute/method to maxIncludeDepth for clarity
+	
+	/ Turned off syntax tree caching by default, as it is still not as tested
+		as I'd like it to be.
+	
+	+ Added translucent method documentation
+	
+	/ Fixed a bug that was causing containernodes to have a spurious blank in their
+		contents.
+	
+	/ Tuned caching to actually work like it's supposed to.
+	
+	- Removed a leftover debugging statement in _buildClosure().
+	
+	+ Updated auto-generated docs.
+	
+2000-03-09 14:31  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (2.0), grammar (2.0), lib/Text/Templar.pm (2.0),
+	pod/Parser.pod (2.0), t/anchor.t (1.2), t/comment.t (2.0),
+	t/conditional.t (1.2), t/define.t (2.0), t/delay.t (2.0), t/end.t
+	(1.2), t/env.t (2.0), t/eval.t (2.0), t/foreach.t (2.0), t/grep.t
+	(2.0), t/include.t (2.0), t/join.t (2.0), t/map.t (2.0), t/meta.t
+	(2.0), t/method.t (2.0), t/methodcall.t (2.0), t/objectfield.t
+	(1.2), t/objectlist.t (1.2), t/procedure.t (1.2), t/query.t (2.0),
+	t/sort.t (2.0), t/stop.t (2.0), t/templates/anchortest.tmpl (1.2),
+	t/templates/commenttest.tmpl (2.0, r2_37),
+	t/templates/definetest.tmpl (2.0), t/templates/delaytest.tmpl (2.0,
+	r2_37), t/templates/endtest.tmpl (1.2), t/templates/envtest.tmpl
+	(2.0, r2_37), t/templates/evaltest.tmpl (2.0, r2_37),
+	t/templates/foreachtest.tmpl (2.0), t/templates/greptest.tmpl
+	(2.0), t/templates/include.incl (2.0, r2_37),
+	t/templates/include2.incl (2.0, r2_37),
+	t/templates/includetest.tmpl (2.0, r2_37),
+	t/templates/jointest.tmpl (2.0), t/templates/maptest.tmpl (2.0),
+	t/templates/metatest.tmpl (2.0, r2_37),
+	t/templates/methodcalltest.tmpl (2.0), t/templates/methodtest.tmpl
+	(2.0, r2_37), t/templates/objectfieldtest.tmpl (1.2),
+	t/templates/objectlisttest.tmpl (1.2),
+	t/templates/proceduretest.tmpl (1.2), t/templates/querytest.tmpl
+	(2.0, r2_37), t/templates/sorttest.tmpl (2.0),
+	t/templates/stoptest.tmpl (2.0, r2_37):
+
+	Beta Release 2.0
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/methodtest.tmpl (1.1):
+
+	file methodtest.tmpl was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/methodcall.t (1.1):
+
+	file methodcall.t was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/sort.t (1.1):
+
+	file sort.t was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/maptest.tmpl (1.1):
+
+	file maptest.tmpl was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/map.t (1.1):
+
+	file map.t was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/grep.t (1.1):
+
+	file grep.t was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/delaytest.tmpl (1.1):
+
+	file delaytest.tmpl was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/jointest.tmpl (1.1):
+
+	file jointest.tmpl was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/greptest.tmpl (1.1):
+
+	file greptest.tmpl was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/delay.t (1.1):
+
+	file delay.t was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/join.t (1.1):
+
+	file join.t was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/foreach.t (1.1):
+
+	file foreach.t was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/metatest.tmpl (1.1):
+
+	file metatest.tmpl was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/commenttest.tmpl (1.1):
+
+	file commenttest.tmpl was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/foreachtest.tmpl (1.1):
+
+	file foreachtest.tmpl was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/stop.t (1.1):
+
+	file stop.t was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/method.t (1.1):
+
+	file method.t was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/methodcalltest.tmpl (1.1):
+
+	file methodcalltest.tmpl was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/: templates/querytest.tmpl, templates/sorttest.tmpl,
+	templates/stoptest.tmpl, anchor.t, comment.t, conditional.t,
+	define.t, delay.t, end.t, env.t, eval.t, foreach.t, grep.t,
+	include.t, join.t, map.t, meta.t, method.t, methodcall.t,
+	objectfield.t, objectlist.t, procedure.t, query.t, sort.t, stop.t,
+	templates/anchortest.tmpl, templates/commenttest.tmpl,
+	templates/definetest.tmpl, templates/delaytest.tmpl,
+	templates/endtest.tmpl, templates/envtest.tmpl,
+	templates/evaltest.tmpl, templates/foreachtest.tmpl,
+	templates/greptest.tmpl, templates/include.incl,
+	templates/include2.incl, templates/includetest.tmpl,
+	templates/jointest.tmpl, templates/maptest.tmpl,
+	templates/metatest.tmpl, templates/methodcalltest.tmpl,
+	templates/methodtest.tmpl, templates/objectfieldtest.tmpl,
+	templates/objectlisttest.tmpl, templates/proceduretest.tmpl
+	(rel-2-0.[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+	,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]):
+
+	+ Added tests for new/renamed directives
+	/ Modified existing tests to use the new architecture
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/sorttest.tmpl (1.1):
+
+	file sorttest.tmpl was initially added on branch rel-2-0.
+	
+2000-03-07 16:28  Michael Granger <ged@FaerieMUD.org>
+
+	* t/templates/stoptest.tmpl (1.1):
+
+	file stoptest.tmpl was initially added on branch rel-2-0.
+	
+2000-03-07 16:27  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar, pod/Parser.pod (rel-2-0.[3,2]):
+
+	/ Major fixes and reworkings for the release
+	
+2000-03-07 16:21  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (rel-2-0.3):
+
+	+ Overrode getDefines() to make it return lists in whatever context it's called in.
+	/ Moved sourceName() into public method space.
+	/ Commonalized all template storage into the contents attribute, and added
+		methods to access the contents
+	+ Added a hack to make sure the stderrOutputFh is opened to something when the
+		template's first loaded.
+	/ Re-worked the template load sequence to provide more useful methods
+	/ Modified errorOutput() to do the open() on whatever filehandle needs to be
+		opened (if any) as the configuration is set.
+	+ Added the node contents accessors to the AUTOLOAD() proxy method
+	- Removed the 'phase name' list for filterSyntaxTree()
+	+ Added some intelligent chomp()-like functionality to the syntax tree nodes to
+		eliminate extra blank lines
+	/ Changed 'END' directive to 'STOP' to avoid confusion between the END block and the
+		END directive.
+	+ Added a check to prevent directive names from clobbering template class methods in
+		filterSyntaxTree().
+	/ Modified to generate closures for each codeblock in filterSyntaxTree() instead of
+		in the grammar so we can put our own stuff inside the sub before its eval'ed.
+	/ Split the 'argument' node into two types: ones that should keep their quoting mechanism
+		and those that should not.
+	/ Turned and fixed directives
+	+ Added a rendering method to process values destined for the template so complex
+		datatypes will show up as something useful
+	/ Heavily modified the trivial node classes heirarchy
+	+ Added auto-generated docs
+	
+2000-03-01 19:32  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (rel-2-0.2):
+
+	/ Lots of corrections in behaviour
+	+ Got error-generation working
+	
+2000-03-01 19:26  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (rel-2-0.2):
+
+	-- Massive changes --
+		+ Fleshed out node preprocess methods
+		+ Refined load and parse methods
+		+ Added errorOutput() method to trigger open of appropriate filehandle for
+			new values
+		+ Added part of the AUTOLOAD method to provide a default for unimplemented
+			node handlers
+		+ Lots of other stuff
+	
+2000-02-26 22:21  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/Text/Templar.pm (rel-2-0.1):
+
+	Major rewrite
+	
+2000-02-26 22:20  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar, pod/Parser.pod (rel-2-0.[1,1]):
+
+	Initial release
+	
+2000-02-26 22:20  Michael Granger <ged@FaerieMUD.org>
+
+	* pod/Parser.pod (1.1):
+
+	file Parser.pod was initially added on branch rel-2-0.
+	
+2000-02-26 22:20  Michael Granger <ged@FaerieMUD.org>
+
+	* grammar (1.1):
+
+	file grammar was initially added on branch rel-2-0.
+	
+2000-02-22 14:14  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (1.1), lib/Text/Templar.pm (1.1), t/anchor.t (1.1),
+	t/comment.t (1.1), t/conditional.t (1.1), t/define.t (1.1), t/end.t
+	(1.1), t/env.t (1.1), t/eval.t (1.1), t/include.t (1.1), t/meta.t
+	(1.1), t/objectfield.t (1.1), t/objectlist.t (1.1), t/procedure.t
+	(1.1), t/query.t (1.1), t/templates/anchortest.tmpl (1.1),
+	t/templates/definetest.tmpl (1.1), t/templates/endtest.tmpl (1.1),
+	t/templates/envtest.tmpl (1.1), t/templates/evaltest.tmpl (1.1),
+	t/templates/include.incl (1.1), t/templates/include2.incl (1.1),
+	t/templates/includetest.tmpl (1.1),
+	t/templates/objectfieldtest.tmpl (1.1),
+	t/templates/objectlisttest.tmpl (1.1),
+	t/templates/proceduretest.tmpl (1.1), t/templates/querytest.tmpl
+	(1.1):
+
+	Initial revision
+	
+2000-02-22 14:14  Michael Granger <ged@FaerieMUD.org>
+
+	* Makefile.PL (1.1.1.1), lib/Text/Templar.pm (1.1.1.1), t/anchor.t
+	(1.1.1.1), t/comment.t (1.1.1.1), t/conditional.t (1.1.1.1),
+	t/define.t (1.1.1.1), t/end.t (1.1.1.1), t/env.t (1.1.1.1),
+	t/eval.t (1.1.1.1), t/include.t (1.1.1.1), t/meta.t (1.1.1.1),
+	t/objectfield.t (1.1.1.1), t/objectlist.t (1.1.1.1), t/procedure.t
+	(1.1.1.1), t/query.t (1.1.1.1), t/templates/anchortest.tmpl
+	(1.1.1.1), t/templates/definetest.tmpl (1.1.1.1),
+	t/templates/endtest.tmpl (1.1.1.1), t/templates/envtest.tmpl
+	(1.1.1.1), t/templates/evaltest.tmpl (1.1.1.1),
+	t/templates/include.incl (1.1.1.1), t/templates/include2.incl
+	(1.1.1.1), t/templates/includetest.tmpl (1.1.1.1),
+	t/templates/objectfieldtest.tmpl (1.1.1.1),
+	t/templates/objectlisttest.tmpl (1.1.1.1),
+	t/templates/proceduretest.tmpl (1.1.1.1),
+	t/templates/querytest.tmpl (1.1.1.1) (utags: RECOVERED_1_11):
+
+	Restarted after repository deletion
+	

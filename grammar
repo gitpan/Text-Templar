@@ -1,7 +1,7 @@
 # -*- makefile -*-
 #
 #	grammar for Text::Templar::Parser
-#	$Id: grammar,v 2.18 2001/12/31 20:53:43 deveiant Exp $
+#	$Id: grammar,v 2.19 2002/08/08 10:19:15 deveiant Exp $
 #
 #  This is a Parse::RecDescent grammar for the Text::Templar::Parser module,
 #  which is part of the Text::Templar module. The code for Parser.pm is
@@ -10,7 +10,7 @@
 #  Authors: Michael Granger <ged@FaerieMUD.org>
 #  and Dave McCorkhill <scotus@FaerieMUD.org>
 #
-#  Copyright (c) 1998-2001 Michael Granger and The FaerieMUD Consortium. All
+#  Copyright (c) 1998-2002 Michael Granger and The FaerieMUD Consortium. All
 #  rights reserved.
 #
 #  This module is free software. You may use, modify, and/or redistribute this
@@ -24,8 +24,9 @@
 #  (POD is in Parser.pod)
 #
 #	For Makefile.PL:
-#	( $VERSION ) = '$Revision: 2.18 $ ' =~ m{\$Revision:\s+(\S+)}; }
+#	( $VERSION ) = '$Revision: 2.19 $ ' =~ m{\$Revision:\s+(\S+)}; }
 #
+
 
 ###############################################################################
 ###	H E A D   P R O D U C T I O N S
@@ -164,7 +165,9 @@ INHERIT_tag:	name									{ \%item }
 
 
 ### Container tags
-FOREACH_tag:	pair name in(?) object methodchain					{ \%item }
+FOREACH_tag:	pair name in(?) object hashpairsort					{ \%item }
+				| pair name in(?) object methodchain hashpairsort	{ \%item }
+				| pair name in(?) object methodchain				{ \%item }
 				| pair name in(?) object							{ \%item }
 				| name in(?) deref object methodchain				{ \%item }
 				| name in(?) deref object							{ \%item }
@@ -229,6 +232,12 @@ deref:			m{\bderef\b}i
 
 with:			m{\bwith\b}i
 
+sort:			m{\bsort(?:ed)?\b}i
+
+bykey:			m{\b(?:by_?)?keys?\b}i
+
+byvalue:		m{\b(?:by_?)?values?\b}i
+
 name:			m{\w+}
 
 integer:		m{\d+}
@@ -238,7 +247,21 @@ matches:		m{(?:\bmatches\b|=~)}i
 codeblock:		<perl_codeblock>
 					{
 						( my $code = $item[1] ) =~ s{^\s*\{(.*)\}\s*$}{$1};
-						bless \$code, "Text::Templar::$item[0]"
+						bless { code => $code, func => undef }, "Text::Templar::$item[0]";
+					}
+
+# Special kinds of codeblocks for sorting iterated hashes (for 'FOREACH PAIR').
+hashpairsort:	sort with(?) codeblock
+					{ bless $item[3], "Text::Templar::$item[0]" }
+				| sort bykey
+					{
+						my $code = '$a->{key} cmp $b->{key}';
+						bless { code => $code, func => undef }, "Text::Templar::$item[0]";
+					}
+				| sort byvalue
+					{
+						my $code = '$a->{value} cmp $b->{value}';
+						bless { code => $code, func => undef }, "Text::Templar::$item[0]";
 					}
 
 variable:		<perl_variable>

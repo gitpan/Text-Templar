@@ -1,1 +1,3 @@
+
+Template: <% EVAL $TEMPLATE_PATH %>
 >>>> Second included content.

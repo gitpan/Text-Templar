@@ -1,35 +1,23 @@
 
 List start:
 ----------------------------------------------------------------------
-
 <% FOREACH testList %>
 	>>> <% METHOD testList %>
 <% END FOREACH %>
-
 ----------------------------------------------------------------------
 List end.
 
 Syntactic sugar start:
 ----------------------------------------------------------------------
 <% FOREACH value IN testSugarList %>
-<%DELAYED%>
 <% IF { $ITERATION % 2 } %>
 	>>> [EVEN] <% METHOD value %>
 <% ELSE %>
 	>>> [ODD] <% METHOD value %>
 <% END IF %>
-<%/DELAYED%>
 <% END FOREACH %>
 ----------------------------------------------------------------------
 Syntactic sugar end.
-
-Method list start:
-----------------------------------------------------------------------
-<% FOREACH value IN testMethodList testMethod %>
-	>>> <% METHOD value %>
-<% END FOREACH %>
-----------------------------------------------------------------------
-Method list end.
 
 Deref list start:
 ----------------------------------------------------------------------
@@ -39,9 +27,17 @@ Deref list start:
 ----------------------------------------------------------------------
 Deref list end.
 
+Methodchain start:
+----------------------------------------------------------------------
+<% FOREACH value IN testMethodChain testArrayMethod %>
+	>>> <% METHOD value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Methodchain end.
+
 Deref methodchain start:
 ----------------------------------------------------------------------
-<% FOREACH value IN DEREF testDerefObject testArrayMethod %>
+<% FOREACH value IN DEREF testDerefObject testArrayRefMethod %>
 	>>> <% METHOD value %>
 <% END FOREACH %>
 ----------------------------------------------------------------------
@@ -55,6 +51,32 @@ Hash iterator (hash) start:
 ----------------------------------------------------------------------
 Hash iterator (hash) end.
 
+Key-sorted hash iterator (hash) start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testKeySortedHashIter SORT BY_KEY %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Key-sorted hash iterator (hash) end.
+
+Value-sorted hash iterator (hash) start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testValueSortedHashIter SORT VALUES %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Value-sorted hash iterator (hash) end.
+
+Custom-sorted (by second letter of key) hash iterator (hash) start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testHashIter SORT {
+	substr($a->{key},1) cmp substr($b->{key},1)
+} %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Custom-sorted iterator (hash) end.
+
 Hash iterator (hashref) start:
 ----------------------------------------------------------------------
 <% FOREACH PAIR pair IN testHashrefIter %>
@@ -62,6 +84,32 @@ Hash iterator (hashref) start:
 <% END FOREACH %>
 ----------------------------------------------------------------------
 Hash iterator (hashref) end.
+
+Key-sorted hash iterator (hashref) start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testKeySortedHashrefIter SORT KEYS %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Key-sorted hash iterator (hashref) end.
+
+Value-sorted hash iterator (hashref) start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testValueSortedHashrefIter SORT BY_VALUE %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Value-sorted hash iterator (hashref) end.
+
+Custom-sorted (by reverse key) hash iterator (hashref) start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testValueSortedHashrefIter SORT WITH {
+	scalar reverse($a->{key}) cmp scalar reverse($b->{key})
+} %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Custom-sorted hash iterator (hashref) end.
 
 Hash iterator (hash) from methodChain start:
 ----------------------------------------------------------------------
@@ -71,6 +119,32 @@ Hash iterator (hash) from methodChain start:
 ----------------------------------------------------------------------
 Hash iterator (hash) from methodChain end.
 
+Key-sorted hash iterator from methodChain start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testKeySortedHashIterObject hash SORT BY_KEY %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Key-sorted hash iterator from methodChain end.
+
+Value-sorted hash iterator from methodChain start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testValueSortedHashIterObject hash SORT VALUES %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Value-sorted hash iterator from methodChain end.
+
+Custom-sorted (by-value) hash iterator from methodChain start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testValueSortedHashIterObject hash SORT WITH {
+	$a->{value} <=> $b->{value}
+} %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Custom-sorted hash iterator from methodChain end.
+
 Hash iterator (hashref) from methodChain start:
 ----------------------------------------------------------------------
 <% FOREACH PAIR pair IN testHashrefIterObject hashref %>
@@ -78,3 +152,30 @@ Hash iterator (hashref) from methodChain start:
 <% END FOREACH %>
 ----------------------------------------------------------------------
 Hash iterator (hashref) from methodChain end.
+
+Key-sorted hash iterator (hashref) from methodChain start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testKeySortedHashrefIterObject hashref SORT BY_KEY %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Key-sorted hash iterator (hashref) from methodChain end.
+
+Value-sorted hash iterator (hashref) from methodChain start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testValueSortedHashrefIterObject hashref SORT VALUES %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Value-sorted hash iterator (hashref) from methodChain end.
+
+Custom-sorted (reverse by-value) hash iterator (hashref) from methodChain start:
+----------------------------------------------------------------------
+<% FOREACH PAIR pair IN testValueSortedHashrefIterObject hashref SORT WITH {
+	$b->{value} <=> $a->{value}
+} %>
+    >>> <% METHODCALL pair key %> => <% METHODCALL pair value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Custom-sorted hash iterator (hashref) from methodChain end.
+

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 #	Perl Makefile for Text::Templar
-#	$Id: Makefile.PL,v 2.8 2001/12/31 22:17:50 deveiant Exp $
+#	$Id: Makefile.PL,v 2.11 2002/08/08 20:28:01 deveiant Exp $
 #
 #	Invoke with 'perl Makefile.PL'
 #
@@ -24,7 +24,7 @@ WriteMakefile(
     VERSION_FROM			=> 'lib/Text/Templar.pm', # finds $VERSION
 	PREREQ_PM	=> {
 		Parse::RecDescent	=> 0,
-		Class::Translucent	=> 1.16,
+		Class::Translucent	=> 1.18,
 		Scalar::Util		=> 0,
 		Data::Dumper		=> 0,
 		IO::Handle			=> 0,
@@ -45,6 +45,8 @@ WriteMakefile(
 		SUFFIX				=> '.gz',
 		DIST_CP				=> 'ln',
 		DIST_DEFAULT		=> 'tardist',
+		CI					=> "cvs commit",
+		RCS_LABEL			=> 'cvs tag release_$(VERSION_SYM)',
 	},
 	clean		=> {
 		FILES				=> "lib/Text/Templar/Parser.pm",

@@ -42,11 +42,14 @@ sub Test {
 
 sub renderResults {
 	return <<"EOF";
-This is the include test:
+This is the include test: (./t/templates/includetest.tmpl)
 
 Here's an included template:
 
+Template: ./t/templates/include.incl
 >> This is the first included template: Here's another:
+
+Template: ./t/templates/include2.incl
 >>>> Second included content.
 EOF
 }

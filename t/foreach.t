@@ -8,12 +8,12 @@ sub new {
 	return bless { value => $value  }, $class
 }
 
-sub testMethod {
+sub testArrayMethod {
 	my $self = shift;
-	return $self->{value};
+	return ( $self->{value} ) x 4;
 }
 
-sub testArrayMethod {
+sub testArrayRefMethod {
 	my $self = shift;
 	return ['one', $self->{value}, 'three'];
 }
@@ -41,7 +41,7 @@ my $t = new Text::Templar
 	includePath => [ './t/templates' ]
 	or print( "1..0\n" ), exit 0;
 
-my $numTests = 11;
+my $numTests = 23;
 my $numTest = 0;
 
 print "1..$numTests\n";
@@ -72,8 +72,8 @@ for my $num ( 0 .. 4 ) {
 	push @testMethodList, new testObject "testValue #$num";
 }
 
-### 4: Add methodcall iterator
-Test( $t->testMethodList(@testMethodList) );
+### 4: Add an object to test the methodchain iterator
+Test( $t->testMethodChain($testMethodList[2]) );
 
 ### 5: Add deref iterator
 Test( $t->derefList(\@testList) );
@@ -84,19 +84,56 @@ Test( $t->testDerefObject( @testMethodList ) );
 ### 7: Add hash iterator
 Test( $t->testHashIter( %testHash ) );
 
-### 8: Add hashref iterator
+### 8: Add key-sorted hash iterator
+Test( $t->testKeySortedHashIter( %testHash ) );
+
+### 9: Add value-sorted hash iterator
+Test( $t->testValueSortedHashIter( %testHash ) );
+
+### 10: Add custom-sorted hash iterator
+Test( $t->testCustomSortedHashIter( %testHash ) );
+
+### 11: Add hashref iterator
 Test( $t->testHashrefIter( \%testHash ) );
 
-### 9: Add hash object
+### 12: Add key-sorted hashref iterator
+Test( $t->testKeySortedHashrefIter( \%testHash ) );
+
+### 13: Add value-sorted hashref iterator
+Test( $t->testValueSortedHashrefIter( \%testHash ) );
+
+### 14: Add custom-sorted hashref iterator
+Test( $t->testCustomSortedHashrefIter( \%testHash ) );
+
+### 15: Add hash object
 Test( $t->testHashIterObject( $hashTestObj ) );
 
-### 10: Add hashref object
+### 16: Add key-sorted hash object iterator
+Test( $t->testKeySortedHashIterObject( $hashTestObj ) );
+
+### 17: Add value-sorted hash iterator
+Test( $t->testValueSortedHashIterObject( $hashTestObj ) );
+
+### 18: Add custom-sorted hash iterator
+Test( $t->testCustomSortedHashIterObject( $hashTestObj ) );
+
+### 19: Add hashref object
 Test( $t->testHashrefIterObject( $hashTestObj ) );
+
+### 20: Add key-sorted hash object iterator
+Test( $t->testKeySortedHashrefIterObject( $hashTestObj ) );
+
+### 21: Add value-sorted hash iterator
+Test( $t->testValueSortedHashrefIterObject( $hashTestObj ) );
+
+### 22: Add custom-sorted hash iterator
+Test( $t->testCustomSortedHashrefIterObject( $hashTestObj ) );
 
 #print STDERR $t->render;
 
-### 11: Render
-Test( $t->render eq renderResults() );
+### 23: Render
+my $resultPattern = ResultPattern();
+Test( $t->render =~ $resultPattern );
 
 
 
@@ -107,110 +144,203 @@ sub Test {
     $result;
 }
 
-sub renderResults {
-	return <<"EOF";
-
-List start:
+sub ResultPattern {qr{List start:
 ----------------------------------------------------------------------
-
-	>>> one
-	>>> two
-	>>> three
-	>>> four
-
+\s+>>> one
+\s+>>> two
+\s+>>> three
+\s+>>> four
 ----------------------------------------------------------------------
 List end.
 
 Syntactic sugar start:
 ----------------------------------------------------------------------
-
-
-	>>> [EVEN] one
-
-
-
-	>>> [ODD] two
-
-
-
-	>>> [EVEN] three
-
-
-
-	>>> [ODD] four
-
+\s+>>> \[EVEN\] one
+\s+>>> \[ODD\] two
+\s+>>> \[EVEN\] three
+\s+>>> \[ODD\] four
 ----------------------------------------------------------------------
 Syntactic sugar end.
 
-Method list start:
-----------------------------------------------------------------------
-	>>> testValue #4
-----------------------------------------------------------------------
-Method list end.
-
 Deref list start:
 ----------------------------------------------------------------------
-	>>> one
-	>>> two
-	>>> three
-	>>> four
+\s+>>> one
+\s+>>> two
+\s+>>> three
+\s+>>> four
 ----------------------------------------------------------------------
 Deref list end.
 
+Methodchain start:
+----------------------------------------------------------------------
+\s+>>> testValue #2
+\s+>>> testValue #2
+\s+>>> testValue #2
+\s+>>> testValue #2
+----------------------------------------------------------------------
+Methodchain end.
+
 Deref methodchain start:
 ----------------------------------------------------------------------
-	>>> one
-	>>> testValue #0
-	>>> three
-	>>> one
-	>>> testValue #1
-	>>> three
-	>>> one
-	>>> testValue #2
-	>>> three
-	>>> one
-	>>> testValue #3
-	>>> three
-	>>> one
-	>>> testValue #4
-	>>> three
+\s+>>> one
+\s+>>> testValue #0
+\s+>>> three
+\s+>>> one
+\s+>>> testValue #1
+\s+>>> three
+\s+>>> one
+\s+>>> testValue #2
+\s+>>> three
+\s+>>> one
+\s+>>> testValue #3
+\s+>>> three
+\s+>>> one
+\s+>>> testValue #4
+\s+>>> three
 ----------------------------------------------------------------------
 Deref methodchain end.
 
-Hash iterator (hash) start:
+Hash iterator \(hash\) start:
 ----------------------------------------------------------------------
-    >>> one => 1
-    >>> three => 3
-    >>> two => 2
-    >>> four => 4
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
 ----------------------------------------------------------------------
-Hash iterator (hash) end.
+Hash iterator \(hash\) end.
 
-Hash iterator (hashref) start:
+Key-sorted hash iterator \(hash\) start:
 ----------------------------------------------------------------------
-    >>> one => 1
-    >>> three => 3
-    >>> two => 2
-    >>> four => 4
+\s+>>> four => 4
+\s+>>> one => 1
+\s+>>> three => 3
+\s+>>> two => 2
 ----------------------------------------------------------------------
-Hash iterator (hashref) end.
+Key-sorted hash iterator \(hash\) end.
 
-Hash iterator (hash) from methodChain start:
+Value-sorted hash iterator \(hash\) start:
 ----------------------------------------------------------------------
-    >>> one => 1
-    >>> three => 3
-    >>> two => 2
-    >>> four => 4
+\s+>>> one => 1
+\s+>>> two => 2
+\s+>>> three => 3
+\s+>>> four => 4
 ----------------------------------------------------------------------
-Hash iterator (hash) from methodChain end.
+Value-sorted hash iterator \(hash\) end.
 
-Hash iterator (hashref) from methodChain start:
+Custom-sorted \(by second letter of key\) hash iterator \(hash\) start:
 ----------------------------------------------------------------------
-    >>> one => 1
-    >>> three => 3
-    >>> two => 2
-    >>> four => 4
+\s+>>> three => 3
+\s+>>> one => 1
+\s+>>> four => 4
+\s+>>> two => 2
 ----------------------------------------------------------------------
-Hash iterator (hashref) from methodChain end.
-EOF
+Custom-sorted iterator \(hash\) end.
+
+Hash iterator \(hashref\) start:
+----------------------------------------------------------------------
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
+----------------------------------------------------------------------
+Hash iterator \(hashref\) end.
+
+Key-sorted hash iterator \(hashref\) start:
+----------------------------------------------------------------------
+\s+>>> four => 4
+\s+>>> one => 1
+\s+>>> three => 3
+\s+>>> two => 2
+----------------------------------------------------------------------
+Key-sorted hash iterator \(hashref\) end.
+
+Value-sorted hash iterator \(hashref\) start:
+----------------------------------------------------------------------
+\s+>>> one => 1
+\s+>>> two => 2
+\s+>>> three => 3
+\s+>>> four => 4
+----------------------------------------------------------------------
+Value-sorted hash iterator \(hashref\) end.
+
+Custom-sorted \(by reverse key\) hash iterator \(hashref\) start:
+----------------------------------------------------------------------
+\s+>>> three => 3
+\s+>>> one => 1
+\s+>>> two => 2
+\s+>>> four => 4
+----------------------------------------------------------------------
+Custom-sorted hash iterator \(hashref\) end.
+
+Hash iterator \(hash\) from methodChain start:
+----------------------------------------------------------------------
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
+----------------------------------------------------------------------
+Hash iterator \(hash\) from methodChain end.
+
+Key-sorted hash iterator from methodChain start:
+----------------------------------------------------------------------
+\s+>>> four => 4
+\s+>>> one => 1
+\s+>>> three => 3
+\s+>>> two => 2
+----------------------------------------------------------------------
+Key-sorted hash iterator from methodChain end.
+
+Value-sorted hash iterator from methodChain start:
+----------------------------------------------------------------------
+\s+>>> one => 1
+\s+>>> two => 2
+\s+>>> three => 3
+\s+>>> four => 4
+----------------------------------------------------------------------
+Value-sorted hash iterator from methodChain end.
+
+Custom-sorted \(by-value\) hash iterator from methodChain start:
+----------------------------------------------------------------------
+\s+>>> one => 1
+\s+>>> two => 2
+\s+>>> three => 3
+\s+>>> four => 4
+----------------------------------------------------------------------
+Custom-sorted hash iterator from methodChain end.
+
+Hash iterator \(hashref\) from methodChain start:
+----------------------------------------------------------------------
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
+\s+>>> (one|two|three|four) => [1-4]
+----------------------------------------------------------------------
+Hash iterator \(hashref\) from methodChain end.
+
+Key-sorted hash iterator \(hashref\) from methodChain start:
+----------------------------------------------------------------------
+\s+>>> four => 4
+\s+>>> one => 1
+\s+>>> three => 3
+\s+>>> two => 2
+----------------------------------------------------------------------
+Key-sorted hash iterator \(hashref\) from methodChain end.
+
+Value-sorted hash iterator \(hashref\) from methodChain start:
+----------------------------------------------------------------------
+\s+>>> one => 1
+\s+>>> two => 2
+\s+>>> three => 3
+\s+>>> four => 4
+----------------------------------------------------------------------
+Value-sorted hash iterator \(hashref\) from methodChain end.
+
+Custom-sorted \(reverse by-value\) hash iterator \(hashref\) from methodChain start:
+----------------------------------------------------------------------
+\s+>>> four => 4
+\s+>>> three => 3
+\s+>>> two => 2
+\s+>>> one => 1
+----------------------------------------------------------------------
+Custom-sorted hash iterator \(hashref\) from methodChain end.}s
 }
