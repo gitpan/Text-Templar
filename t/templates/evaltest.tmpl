@@ -1,0 +1,11 @@
+<% DEFINE testVar 'The test value' %>
+Test 1: <% EVAL $testVar %>
+Test 2: <% EVAL $testVar '-- %s --' %>
+Test 3: <% EVAL {
+	my $something = 'test this sentence';
+	my $letters = join '', reverse split( //, $something );
+
+	return $letters;
+} %>
+Test 4: <% EVAL { 2 + 2 } '%09d' %>
+

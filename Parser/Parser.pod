@@ -1,0 +1,66 @@
+
+=head1 NAME
+
+Text::Templar::Parser - a parser for generating a syntax tree from a Templar template
+
+=head1 SYNOPSIS
+
+  use Text::Templar::Parser;
+
+  my ( $templateContent, $parser, $syntaxTree );
+
+  ### Open the template and inhale the whole file into templateContent
+  open TEMPLATE, "<template.tmpl";
+  { local $/ = undef; $templateContent = <TEMPLATE>; }
+  close TEMPLATE;
+
+  ### Get a new parser object use it to generate a syntax tree out of the
+  ###	template content
+  $parser = new Text::Templar::Parser;
+  $syntaxTree = $parser->parse( $templateContent );
+
+=head1 REQUIRES
+
+C<Parse::RecDescent>
+
+=head1 EXPORTS
+
+Nothing.
+
+=head1 DESCRIPTION
+
+This class is a Parse::RecDescent parser for generating a syntax tree out of
+Text::Templar templates. Text::Templar uses this syntax tree as the content of
+an object that can be used to generate the content specified by the template.
+
+The parser works by parsing the parts of the template into 'nodes'. These nodes
+are chunks of the template that are blessed into a node class (eg.,
+Text::Templar::METHOD, Text::Templar::FOREACH, etc.) and stored in an
+array. Each element of the array is a node with zero or more subnodes, depending
+on its type.
+
+The classes that the nodes are blessed into aren't defined by the parser class,
+so if you wish them to be useful objects, you will have to create the classes
+yourself. See the B<TRIVIAL NODE CLASSES> section of L<Text::Templar> for more
+on how this works.
+
+I<This needs more work.>
+
+=head1 RCSID
+
+$Id: Parser.pod,v 2.2 2001/04/24 00:49:28 deveiant Exp $
+
+=head1 AUTHOR/S
+
+Michael Granger E<lt>ged@FaerieMUD.orgE<gt> and Dave McCorkhill
+E<lt>scotus@FaerieMUD.orgE<gt>
+
+Copyright (c) 1998-2001 Michael Granger and The FaerieMUD Consortium. All rights
+reserved.
+
+This module is free software. You may use, modify, and/or redistribute this
+software under the terms of the Perl Artistic License. (See
+http://language.perl.com/misc/Artistic.html)
+
+=cut
+

@@ -1,0 +1,101 @@
+
+Simple conditional test:
+--------------------------------------------------
+<% IF condition %>
+    Condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Compound conditional test:
+--------------------------------------------------
+<% IF compoundConditional %>
+    Condition failed.
+<% ELSE %>
+    Condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Complex conditional test:
+--------------------------------------------------
+<% IF complexConditional %>
+    Condition failed.
+<% ELSIF otherComplexConditional %>
+    Other condition passed.
+<% ELSE %>
+    Condition failed.
+<% END IF %>
+--------------------------------------------------
+
+Reached nested conditional test:
+--------------------------------------------------
+<% IF outerConditional %>
+    Outer condition passed.
+    <% IF innerConditional %>
+        Inner conditional failed.
+    <% ELSE %>
+        Inner conditional passed.
+    <% END IF %>
+<% END IF %>
+--------------------------------------------------
+
+Unreached nested conditional test:
+--------------------------------------------------
+<% IF unreachedOuterConditional %>
+    Outer condition failed.
+    <% IF unreachedInnerConditional %>
+        Inner conditional failed.
+    <% ELSE %>
+        Inner conditional failed.
+    <% END IF %>
+<% END IF %>
+--------------------------------------------------
+
+Methodcall conditional test:
+--------------------------------------------------
+<% IF conditionalObject testMethod %>
+    Condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Methodcall + Regexp matchspec conditional test:
+--------------------------------------------------
+<% IF conditionalObject testMethod /(?i)y/ %>
+    Regexp condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Methodcall + Regexp matchspec conditional failure test:
+--------------------------------------------------
+<% IF conditionalObject testMethod /(?i)n/ %>
+    Regexp conditional failure failed.
+<% END IF %>
+--------------------------------------------------
+
+Methodcall + Array matchspec conditional test:
+--------------------------------------------------
+<% IF conditionalObject testMethod [ 'yep' ] %>
+    Array condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Methodcall + Array matchspec conditional failure test:
+--------------------------------------------------
+<% IF conditionalObject testMethod [ 'nope' ] %>
+    Array condition failure failed.
+<% END IF %>
+--------------------------------------------------
+
+Methodcall + Hash matchspec conditional test:
+--------------------------------------------------
+<% IF conditionalObject testMethod { 'yep' => 1 } %>
+    Condition passed.
+<% END IF %>
+--------------------------------------------------
+
+Methodcall + Hash matchspec conditional failure test:
+--------------------------------------------------
+<% IF conditionalObject testMethod { 'nope' => 1 } %>
+    Condition failure failed.
+<% END IF %>
+--------------------------------------------------
+

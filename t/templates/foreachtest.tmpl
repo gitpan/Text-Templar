@@ -1,0 +1,48 @@
+
+List start:
+----------------------------------------------------------------------
+
+<% FOREACH testList %>
+	>>> <% METHOD testList %>
+<% END FOREACH %>
+
+----------------------------------------------------------------------
+List end.
+
+Syntactic sugar start:
+----------------------------------------------------------------------
+<% FOREACH value IN testSugarList %>
+<%DELAYED%>
+<% IF { $ITERATION % 2 } %>
+	>>> [EVEN] <% METHOD value %>
+<% ELSE %>
+	>>> [ODD] <% METHOD value %>
+<% END IF %>
+<%/DELAYED%>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Syntactic sugar end.
+
+Method list start:
+----------------------------------------------------------------------
+<% FOREACH value IN testMethodList testMethod %>
+	>>> <% METHOD value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Method list end.
+
+Deref list start:
+----------------------------------------------------------------------
+<% FOREACH value IN DEREF derefList %>
+	>>> <% METHOD value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Deref list end.
+
+Deref methodchain start:
+----------------------------------------------------------------------
+<% FOREACH value IN DEREF testDerefObject testArrayMethod %>
+	>>> <% METHOD value %>
+<% END FOREACH %>
+----------------------------------------------------------------------
+Deref methodchain end.

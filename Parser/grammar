@@ -1,0 +1,295 @@
+# -*- makefile -*-
+#
+#	grammar for Text::Templar::Parser
+#	$Id: grammar,v 2.14 2001/05/28 20:06:42 deveiant Exp $
+#
+#  This is a Parse::RecDescent grammar for the Text::Templar::Parser module,
+#  which is part of the Text::Templar module. The code for Parser.pm is
+#  auto-generated when you run a 'perl Makefile.PL; make'.
+#
+#  Authors: Michael Granger <ged@FaerieMUD.org>
+#  and Dave McCorkhill <scotus@FaerieMUD.org>
+#
+#  Copyright (c) 1998-2001 Michael Granger and The FaerieMUD Consortium. All
+#  rights reserved.
+#
+#  This module is free software. You may use, modify, and/or redistribute this
+#  software under the terms of the Perl Artistic License. (See
+#  http://language.perl.com/misc/Artistic.html)
+#
+#  THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES,
+#  INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND
+#  FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  (POD is in Parser.pod)
+#
+#	For Makefile.PL:
+#	( $VERSION ) = '$Revision: 2.14 $ ' =~ m{\$Revision:\s+(\S+)}; }
+#
+
+###############################################################################
+###	H E A D   P R O D U C T I O N S
+###############################################################################
+
+parse:			chunk(s) eofile { $return = $item[1] }
+
+chunk:			<rulevar: $sourceName = $thisparser->{local}{source}>
+chunk:			<skip: ''> ( literal | node )
+				| <error: Failed parse of '$sourceName'>
+
+literal:		m{(?:[^<]|<(?!%)){1,16380}}s
+					{ bless \$item[1], "Text::Templar::$item[0]" }
+
+node:			unitag | containerTag | conditionalTag
+				| <error: Invalid node>
+
+eofile:			m{^\Z}
+
+
+###############################################################################
+###	T A G   T Y P E S
+###############################################################################
+
+unitag:			<skip: qr{\s*}>
+				'<%' unitagName <commit> <matchrule:$item[3]_tag> '%>'
+					{ bless $item[5], "Text::Templar::$item[3]" }
+				| <error?> <reject>
+
+containerTag:	<skip: qr{\s*}>
+				'<%' containerTagName <commit> <matchrule:$item[3]_tag> '%>'
+				containerContent closingTag[$item[3]]
+					{ bless [ @item[5,7] ], "Text::Templar::$item[3]" }
+				| <error?> <reject>
+
+
+conditionalTag:	<skip: qr{\s*}>
+				'<%' conditionalTagName <commit> <matchrule:$item[3]_tag> '%>'
+				conditionalContent closingTag[$item[3]]
+					{ bless [ @item[5,7] ], "Text::Templar::$item[3]" }
+				| <error?> <reject>
+
+conditionalSubtag:			
+				<skip: qr{\s*}>
+				'<%' conditionalSubtagName <commit> <matchrule:$item[3]_tag> '%>'
+					{ bless [$item[5]], "Text::Templar::$item[3]" }
+				| <error?> <reject>
+
+
+unitagName:		'METHODCALL'| 'METHOD'		| 'DEFINE'		|
+				'STOP'		| 'EVAL'		| 'INCLUDE'		|
+				'QUERY'		| 'ENV'			| 'META'		|
+				'INHERIT'	| 'DUMP'
+
+containerTagName:
+				'FOREACH'	| 'GREP'		| 'JOIN'		| 
+				'COMMENT'	| 'DELAYED'		| 'MAP'			|
+				'SORT'		| 'MAXLENGTH'
+
+conditionalTagName:
+				'IF'
+
+conditionalSubtagName:
+				'ELSE'		| 'ELSIF'
+
+
+containerContent:
+				chunk(s)
+
+conditionalContent:
+				conditionalChunk(s)
+
+conditionalChunk:
+				<skip: ''> ( literal | node | conditionalSubtag )
+
+closingTag:		'<%' m{/|END} "$arg[0]" '%>'
+
+
+###############################################################################
+###	D I R E C T I V E   F O R M A T S
+###############################################################################
+
+### Unitags
+METHOD_tag:		name codeblock							{ \%item }
+				| name format							{ \%item }
+				| name									{ \%item }
+				| <error>
+
+DUMP_tag:		name									{ \%item }
+				| <error>
+
+METHODCALL_tag:	name methodchain format					{ \%item }
+				| name methodchain						{ \%item }
+				| <error>
+
+DEFINE_tag:		name m{=?} quotedArgument				{ \%item }
+				| variable m{=?} quotedArgument			{ \%item }
+				| name m{=?} codeblock					{ \%item }
+				| variable m{=?} codeblock				{ \%item }
+				| <error>
+
+STOP_tag:		empty									{ \%item }
+				| <error>
+
+EVAL_tag:		variable  format						{ \%item }
+				| variable								{ \%item }
+				| codeblock	format						{ \%item }
+				| codeblock								{ \%item }
+				| <error>
+
+INCLUDE_tag:	path									{ \%item }
+
+QUERY_tag:		name question matchspec					{ \%item }
+				| <error>
+
+ENV_tag:		name format								{ \%item }
+				| name									{ \%item }
+				| <error>
+
+META_tag:		name argument							{ \%item }
+				| <error>
+
+ELSE_tag:		empty									{ \%item }
+				| <error>
+
+ELSIF_tag:		object methodchain matches(?) matchspec	{ \%item }
+				| object methodchain					{ \%item }
+				| name matches(?) matchspec				{ \%item }
+				| name									{ \%item }
+				| variable matches(?) matchspec			{ \%item }
+				| variable								{ \%item }
+				| codeblock								{ \%item }
+				| <error>
+
+INHERIT_tag:	name									{ \%item }
+				| <error>
+
+
+### Container tags
+FOREACH_tag:	name in(?) deref object methodchain					{ \%item }
+				| name in(?) deref object							{ \%item }
+				| name in(?) object methodchain						{ \%item }
+				| name in(?) object									{ \%item }
+				| name												{ \%item }
+				| <error>
+
+IF_tag:			object methodchain matches(?) matchspec				{ \%item }
+				| object methodchain								{ \%item }
+				| name matches(?) matchspec							{ \%item }
+				| name												{ \%item }
+				| variable matches(?) matchspec						{ \%item }
+				| variable											{ \%item }
+				| codeblock											{ \%item }
+				| <error>
+
+MAP_tag:		name with(?) codeblock								{ \%item }
+				| name in(?) object methodchain with(?) codeblock	{ \%item }
+				| <error>
+
+SORT_tag:		name with(?) codeblock								{ \%item }
+				| name in(?) object methodchain with(?) codeblock	{ \%item }
+				| <error>
+
+GREP_tag:		name with(?) codeblock								{ \%item }
+				| name in(?) object methodchain with(?) codeblock	{ \%item }
+				| <error>
+
+JOIN_tag:		name with(?) argument								{ \%item }
+				| name in(?) object with(?) argument				{ \%item }
+				| name in(?) object methodchain with(?) argument	{ \%item }
+				| <error>
+
+COMMENT_tag:	empty												{ \%item }
+				| <error>
+
+DELAYED_tag:	empty												{ \%item }
+				| <error>
+
+MAXLENGTH_tag:	object methodchain									{ \%item }
+				| integer											{ \%item }
+				| name												{ \%item }
+				| codeblock											{ \%item }
+				| variable											{ \%item }
+				| <error>
+
+
+###############################################################################
+###	D I R E C T I V E   A R G U M E N T S
+###############################################################################
+
+empty:			m{\s*}
+
+object:			name
+
+in:				m{\bin\b}i
+
+deref:			m{\bderef\b}i
+
+with:			m{\bwith\b}i
+
+name:			m{[a-zA-Z]\w+}
+
+integer:		m{\d+}
+
+matches:		m{(?:\bmatches\b|=~)}i
+
+codeblock:		<perl_codeblock>
+					{
+						( my $code = $item[1] ) =~ s{^\s*\{(.*)\}\s*$}{$1};
+						bless \$code, "Text::Templar::$item[0]"
+					}
+
+variable:		<perl_variable>
+
+format:			quotedValue
+
+question:		quotedValue
+
+path:			m{^\s*[^\s]+}
+				| quotedValue
+				| <error>
+
+quotedValue:	<perl_quotelike>				{ $item[1]->[2] }
+
+matchspec:		array							#{ bless $item[1], $item[0] }
+				| hash							#{ bless $item[1], $item[0] }
+				| regexp						#{ bless $item[1], $item[0] }
+				| <error>
+
+array:			'[' argumentlist ']'			{bless [ @{$item{argumentlist}} ], "Text::Templar::$item[0]"}
+
+### Have to cooerce the array into a hash...
+hash:			'{' argumentlist '}'			{bless {@{$item{argumentlist}}}, "Text::Templar::$item[0]"}
+
+### ...and keep the qr{} a compiled regexp
+regexp:			'/' m{([^/]|(?<=\\)/)+} '/'		{bless do { my $r = qr{$item[2]} }, "Text::Templar::$item[0]"}
+
+
+methodchain:	method m{(\.|->)} methodchain(s)
+					{[ $item[1], (ref $item[3][0] eq 'ARRAY' ? @{$item[3][0]} : $item[3][0]) ]}
+				| method
+					{[ $item[1] ]}
+
+method:			name '(' quotedArgumentlist ')'
+					{ bless {name => $item{name}, arglist => $item{quotedArgumentlist}}, "Text::Templar::$item[0]" }
+				| name m{(?:\(\s*\))?}
+					{ bless {name => $item{name}}, "Text::Templar::$item[0]" }
+
+argumentlist:	argument m{(,|=>)} argumentlist(s)
+					{[ $item[1], (ref $item[3][0] eq 'ARRAY' ? @{$item[3][0]} : $item[3][0]) ]}
+				| argument
+					{[ $item[1] ]}
+
+argument:		m{[\d\.]+}
+				| <perl_variable>
+				| <perl_quotelike>				{$item[1]->[2]}
+
+quotedArgumentlist:	quotedArgument m{(,|=>)} quotedArgumentlist(s)
+					{[ $item[1], (ref $item[3][0] eq 'ARRAY' ? @{$item[3][0]} : $item[3][0]) ]}
+				| quotedArgument
+					{[ $item[1] ]}
+
+quotedArgument:	m{[\d\.]+}
+				| <perl_variable>
+				| <perl_quotelike>				{ sprintf 'q{%s}', $item[1]->[2] }
+
+

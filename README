@@ -1,0 +1,81 @@
+
+
+  Text::Templar - A document-generation object class
+
+
+Michael Granger <ged@FaerieMUD.org>
+and Dave McCorkhill <scotus@FaerieMUD.org>
+
+Copyright (c) 1998-2001 Michael Granger and The FaerieMUD Consortium. All
+rights reserved.
+
+This module is free software. You may use, modify, and/or redistribute this
+software under the terms of the Perl Artistic License. (See
+http://language.perl.com/misc/Artistic.html)
+
+THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND
+FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Prerequisites
+-------------
+perl 5.6
+Parse::RecDescent
+Class::Translucent >= 1.17
+Scalar::Util
+
+
+Installing
+----------
+
+$ perl Makefile.PL
+$ make all test
+$ su
+# make install
+
+
+Description
+-----------
+This module is an object class for generating text. It is configured by creating
+template files with specially formatted tags.
+
+It differs from other templating modules in that it has an inverted control
+model. This means that the template itself is a passive element of the
+controlling program, allowing for cleaner decoupling of the presentation or data
+output part of a program from the logic/control part. While most templating
+modules have some sort of embedded program logic, Templar templates only concern
+themselves with manipulating the data that is directly used for
+presentation. The actual mechanism for gathering, modifying, and controlling the
+data is assumed to be in the program that uses the template.
+
+The template object is created by parsing lines of text which have HTML-like
+tags embedded in them, which are referred to as "directives" in this
+document. Directives define the interface and behaviors of the instantiated
+template object, and the output is manipulated purely by interacting with the
+template objects.
+
+
+Caveats
+-------
+
+The code for the recursive-descent parser for this module is huge (about 1Mb on
+my machine). This is probably due to my naive Parse::RecDescent grammar.
+
+Due to the size of this file, the module is (in my opinion) unusable for CGIs or
+anything else which is negatively affected by the load times associated with
+such a large source file.
+
+If anyone has any suggestions or patches that remedy this problem, I'd be most
+appreciative. I am using this module heavily in quite a few web systems written
+in mod_perl, for which it seems adequately suited, especially when PerlRequire'd
+by the parent server.
+
+For larger examples than are in the POD documentation, you may wish to peruse
+the templates and mod_perl handlers in the CVS repository of the Icebox project,
+which may be found at:
+
+  <http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/icebox/Icebox/>
+
+
+

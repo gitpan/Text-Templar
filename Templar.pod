@@ -1,0 +1,1802 @@
+# -*- cperl-mode -*-
+################################################################################
+#
+#  Templar.pod - POD documentation for the Text::Templar class
+#  $Id: Templar.pod,v 1.8 2001/05/28 20:12:15 deveiant Exp $
+#
+#  Authors: Michael Granger <ged@FaerieMUD.org>
+#  and Dave McCorkhill <scotus@FaerieMUD.org>
+#
+#  Copyright (c) 1998-2001 Michael Granger and The FaerieMUD Consortium. All
+#  rights reserved.
+#
+#  This module is free software. You may use, modify, and/or redistribute this
+#  software under the terms of the Perl Artistic License. (See
+#  http://language.perl.com/misc/Artistic.html)
+#
+#  THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+#  WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+#  MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+#  (POD moved to Templar.pod)
+#
+################################################################################
+
+=head1 NAME
+
+Text::Templar - a document-generation object class
+
+=head1 SYNOPSIS
+
+  use Text::Templar;
+
+  my $template = <<'EOF';
+
+  <HTML><HEAD><TITLE>This is the title: <% METHOD title %></TITLE></HEAD>
+
+  <BODY>
+
+  <% METHOD body %>
+
+  <ADDRESS>
+  <% METHOD footer %>
+  </ADDRESS>
+
+  </BODY>
+  EOF
+
+  my $templateObject = new Text::Templar
+	[ $template ];
+
+  $templateObject->title( "The Rest of the Story" );
+  $templateObject->body( @content );
+  $templateObject->footer( "Page 1" );
+
+  print $templateObject->render;
+
+=head1 REQUIRES
+
+C<Perl 5.6>, C<Class::Translucent>, C<IO::File>, C<IO::Handle>,
+C<Scalar::Util>, C<Data::Dumper>, C<Text::Templar::Parser>,
+C<Text::Templar::Exceptions>
+
+=head1 EXPORTS
+
+None.
+
+=head1 AUTHOR/S
+
+Michael Granger E<lt>ged@FaerieMUD.orgE<gt> and Dave McCorkhill
+E<lt>scotus@FaerieMUD.orgE<gt>.
+
+Copyright (c) 1998-2001 Michael Granger and The FaerieMUD Consortium. All rights
+reserved.
+
+This module is free software. You may use, modify, and/or redistribute this
+software under the terms of the Perl Artistic License. (See
+http://language.perl.com/misc/Artistic.html)
+
+=head1 DESCRIPTION
+
+This module is an object class for generating text. It is configured by creating
+template files with specially formatted tags.
+
+It differs from other templating modules in that it has an inverted control
+model. This means that the template itself is a passive element of the
+controlling program, allowing a decoupling of the presentation or data output
+part of a program and the logic/control part. Templar templates only concern
+themselves with manipulating the data that is directly used for
+presentation. The actual mechanism for gathering, modifying, and controlling the
+data is assumed to be in the program that uses the template.
+
+The template object is created by parsing lines of text which have HTML-like
+tags embedded in them, which are referred to as "directives" in this
+document. Directives define the interface and behaviors of the instantiated
+template object, and the output is manipulated purely by interacting with the
+template objects.
+
+=head2 Template Phases
+
+Template objects have a three-phase life cycle: parse phase, interaction phase,
+and rendering phase.
+
+=over 4
+
+=item Parse Phase
+
+The parse phase is entered when the C<load()> method is called, either
+explicitly or by passing a source file name to the C<new()> method. The template
+source is parsed, and an object is returned which can be manipulated by the
+controlling program. Directives parsed from the template source control the
+structure and behavior of the resultant object. If the template content fails to
+parse, an exception is generated which you may catch by wrapping the call to
+C<load()> in an C<eval BLOCK>, or by using the C<try>/C<catch> functions from
+the L<Text::Templar::Exception> module.
+
+=item Interaction Phase
+
+In this phase, the controlling program can insert data into the template object
+to (possibly) modify the final output. It does this by calling methods on the
+template object with the desired data. Each such method acts as an appender,
+adding the specified input to a content array which is later accessed by the
+template object itself when it is rendered.
+
+=item Render Phase
+
+After the controlling program finishes with the interaction phase, it can call
+the C<render()> method on the template object, which causes the template to
+return rendered content. Rendering is when the template actually does any
+processing it needs to do to turn the data given to it by the controlling
+program into text output.
+
+=back
+
+=head1 TEMPLATE DIRECTIVES
+
+Directives are embedded tags of the form:
+
+  <% DIRECTIVE attributes %>
+
+A directive may have one or more forms with different attributes. There
+are three basic types of directive: the unitag, container tag, and the
+conditional tag.
+
+=head2 Directive Attributes
+
+=over 4
+
+=item B<name>
+
+The directive name, which must begin with a letter, and consist of alphanumeric
+characters and underscores. A directive with a C<name> attribute will cause a
+method of the same name to be created in the template object. Any data specified
+as an argument to this method will be made available to the directive at render
+time.
+
+=item B<codeblock>
+
+A Perl codeblock of the form:
+
+ { <code> }
+
+The codeblock you specify will have access to any C<DEFINE>d variables as
+lexical scalars, and will also have at least the following constants defined:
+
+=over 4
+
+=item C<$TEMPLATE_PATH>
+
+The fully-qualified path to the template which contains the directive, or
+'(anonymous)' if the template source came from an array.
+
+=item C<$TEMPLATE_OBJECT>
+
+A reference to the template object in which the codeblock is executing.
+
+=item C<$TEMPLAR_VERSION>
+
+The version number of the Text::Templar module in which the codeblock is running.
+
+=item C<$TEMPLAR_RCSID>
+
+The RCS-style id string from the Text::Templar module in which the codeblock is
+running.
+
+=back
+
+=item B<format>
+
+A C<printf>-style format string which will be applied to each rendered element
+of the directive's content directly. The format should contain only one
+formatting directive.
+
+See the documentation for the L<Perl printf function|perlfunc/"printf"> for
+details.
+
+=item B<methodchain>
+
+A chain of elements which can be method calls, hash element keys, or array
+indexes. The meaning of the element is decided by looking at the type of data it
+is being performed on, so that an element that applies to an object is assumed
+to be a method call, an element applied to a hashref is assumed to be a hash
+lookup, and an element applied to an arrayref is assumed to be an index.
+
+Each element in the chain is separated by either a 'C<.>' or 'C<-E<gt>>', and
+method calls can optionally have zero or more arguments in parentheses. For
+example, a method chain of the following form:
+
+  customer()
+
+would call the 'customer' method on whatever object it was applied to. If the
+'customer' method returns an object, then you could change it to read:
+
+  customer->name
+
+to retrieve the customer's name from the C<customer> object. Note that you
+needn't use parenthesis if you are not passing arguments. If the customer class
+defines a C<phoneNumbers> method which returns a reference to a hash of
+telephone numbers, you could look up the customer's home phone number with the
+following syntax:
+
+  customer->phoneNumbers->work
+
+You could also use 'C<.>' as method call separators to do it like this:
+
+  customer.phoneNumbers.work
+
+Similarly, you can lookup a single element from an arrayref by adding its index
+to the methodchain:
+
+  customer.orders.5.orderNumber
+
+=item B<quotedArgument>
+
+A quoted literal argument. You can use any style of quotes valid in Perl. Eg.,
+C<'John'>, C<"John">, C<q{John}>, C<qq/John/>, and C<qw#John#> are all
+equivalent.
+
+=item B<variable>
+
+A valid Perl variable name, with prepended type-indicator. Examples:
+
+  $name
+
+  @includePath
+
+  %lookupTable
+
+=item B<path>
+
+An absolute or relative Unix pathname. If the path has spaces or other unusual
+characters, it must be quoted with any valid Perl quoting mechanism. Eg.,
+
+  /www/templates/main.tmpl
+
+  "/mnt/docs/My Documents/something"
+
+=item B<question>
+
+A quoted string (any Perl quote), which is used as a prompt for the user.
+
+=item B<matchspec>
+
+A matching specification used in QUERY and conditional directives, which may be
+in one of three forms: a regular expression, an array of matches, or a hash
+lookup table.
+
+A regexp matchspec causes a simple regexp match to be attempted against
+candidate values, and any saved subexpressions (if present) are returned.
+
+An array matchspec specifies a list of acceptable values, and simply returns any
+elements of the array which exactly (stringwise) match the candidate value.
+
+A hash matchspec specifies a hash of key-value pairs that act like
+abbreviations.  The keys are compared (stringwise) to candidate values, and if
+any match, the expanded version (the value) is returned.
+
+=item B<iterator>
+
+For looping container constructs (FOREACH, MAP, GREP, SORT, and JOIN), you may
+specify the name of an iterator which is used as the name of the iterated value
+inside the loop. This name falls under the same constraints as the
+L<name|"name"> attribute, and only exists inside of the loop, much the same way
+perl's C<local> works. If another named directive is contained in the same page,
+the iterator moves the old value out of the way prior to replacing it, and when
+the loop is finished, moves it back.
+
+=back
+
+=head2 Unitags
+
+A unitag is one directive by itself which possibly contains attributes that
+provide the specifics for that directive.
+
+=over 4
+
+=item B<METHOD directive>
+
+	<% METHOD <name> <codeblock> %>
+	<% METHOD <name> <format> %>
+	<% METHOD <name> %>
+
+Creates a template method with the specified name, which when called, will
+insert its arguments into the rendered output at any place the named directive
+appears. A method may appear with the same name more than once, in which case
+the arguments passed to the method appear in each place the method directive is
+defined. Methods may have an optional C<format> or C<codeblock> attribute.
+
+The C<format> attribute is a C<printf>-style format string which is applied to
+each template value after it has been rendered.
+
+The C<codeblock> attribute is a Perl subroutine which acts as a preprocessor for
+data that is given to the method. The subroutine is called once for each value
+that has been passed to the named method at render time, and any values it
+returns are inserted into the place the directive occupies. The subroutine is
+passed three arguments: a reference to the template object, a reference to the
+METHOD node object, and the content item itself.
+
+B<Examples:>
+
+In the template:
+
+  <TITLE><% METHOD title %></TITLE>
+  <P>The total number of dollars collected: $<% METHOD totalDollars '%05.2f' %></P>
+
+  <P><% METHOD pagelinks {
+	my ( $template, $node, $data ) = @_;
+
+	return qq{[ <A href="$data->{href}">$data->{link}</A> ]};
+  } %>
+
+In the program:
+
+  $template->title( "How the West Was Won" );
+  $template->totalDollars( 15 );
+
+  $template->pagelinks({ href => 'pageone.html', link => 'Page One' });
+  $template->pagelinks({ href => 'pagetwo.html', link => 'Page Two' });
+  $template->pagelinks({ href => 'pagethree.html', link => 'Page Three' });
+
+Would render as:
+
+  <TITLE>How the West Was Won</TITLE>
+  <P>The total number of dollars collected: $00015.00</P>
+
+  <A href="pageone.html">Page One</A>
+  <A href="pagetwo.html">Page Two</A>
+  <A href="pagethree.html">Page Three</A>
+
+=item B<METHODCALL directive>
+
+	<% METHODCALL <name> <methodchain> <format> %>
+	<% METHODCALL <name> <methodchain> %>
+
+Creates a template method with the specified name. When the template is
+rendered, the specified method chain will be called on the data passed as
+arguments to the template method, and any return values are rendered and
+inserted in place of the directive. See the L<"methodchain"> attribute elsewhere
+in this document for more.
+
+Methodcall directives may have an optional format attribute.
+
+B<Examples:>
+
+In the template:
+
+  <TITLE><% METHODCALL account customer.wholeName %>'s Account</TITLE>
+  <P>Balance: $<% METHODCALL account calculateCurrencyValue('USD') '%.2f' %></P>
+
+In the program:
+
+  my $account = lookup Account 15;
+  $template->account( $account );
+
+Would, if account object 15 contained a customer object whose name was 'Alfred
+Rohe', and a balance of $1634.15, render as:
+
+  <TITLE>Alfred Rohe's Account</TITLE>
+  <P>Balance: $1634.15</P>
+
+=item B<DUMP directive>
+
+	<% DUMP <name> %>
+
+Creates a template method with the specified name. When the template is
+rendered, the specified value will be dumped as Perl code into the rendered
+output.
+
+B<Examples:>
+
+In the template:
+
+  <P>The hash looks like this:</P>
+  <PRE>
+  <% DUMP myHash %>
+  </PRE>
+
+In the program:
+
+  my $hash = { some => 'test', values => 'for', demonstration => 'purposes' };
+  $template->myHash( $hash );
+
+Would render looking something like:
+
+  <P>The hash looks like this:</P>
+  <PRE>
+  $myHash = {
+              'values' => 'for',
+              'demonstration' => 'purposes',
+              'some' => 'test'
+            };
+  </PRE>
+
+=item B<DEFINE directive>
+
+	<% DEFINE <name> [=] <quotedArgument> %>
+	<% DEFINE <variable> [=] <quotedArgument> %>
+	<% DEFINE <name> [=] <codeblock> %>
+	<% DEFINE <variable> [=] <codeblock> %>
+
+The C<DEFINE> directive causes a template attribute with the name specified to
+be defined. These attributes will thenceforth be available to any evaluated
+codeblock in the same template.
+
+The first directive attribute can either be a C<name>, in which case it is
+assumed to be a scalar value of the same name, or a C<variable>.
+
+The '=' part of the directive is syntactic sugar, and doesn't really cause
+anything different to happen.
+
+The second argument can be either a quoted string or a C<codeblock> to be
+evaluated. The result from the codeblock will be assigned to the defined
+attribute.
+
+After the template is parsed, you can access defined values through the
+C<defines()>, C<getDefines()>, C<setDefines()>, and C<deleteDefines()> methods,
+or inside any evaluated value as a lexical variable.
+
+B<Examples:>
+
+In the template:
+
+  <% DEFINE $parseTime { scalar localtime } %>
+  <% DEFINE bodyColor '#FFFFFF' %>
+  <% DEFINE linkColor '#FF0000' %>
+  <BODY bgcolor="<% EVAL $bodyColor %>" link="<% EVAL $linkColor %>">
+	<P>Parsed at: <% EVAL $parseTime %></P>
+  </BODY>
+
+In the program:
+
+  $oldLinkColor = $template->getDefines( 'linkColor' );
+
+  # Set a new link color
+  $template->setDefines( linkColor => '#00FF00' );
+
+Rendered, the template would look like:
+
+  <BODY bgcolor="#FFFFFF" link="#00FF00">
+	<P>Parsed at: Mon Apr  3 15:43:40 2000</P>
+  </BODY>
+
+=item B<STOP directive>
+
+	<% STOP %>
+
+The C<STOP> directive indicates that the parser should stop rendering at the
+point at which it is encountered. Template content below the C<STOP> directive
+will be parsed, and will be reflected in the structure of the template object,
+but will not show up when rendered.
+
+B<Examples:>
+
+In the template:
+
+  This stuff will be rendered.
+
+  <% STOP %>
+
+  This stuff won't. But I can still <% DEFINE something = 'here' %>.
+
+In the program:
+
+  $template->getDefines( 'something' ); # -> Returns 'here'
+
+Would render as:
+
+  This stuff will be rendered.
+
+=item B<EVAL directive>
+
+	<% EVAL <variable> <format> %>
+	<% EVAL <variable> %>
+	<% EVAL <codeblock> <format> %>
+	<% EVAL <codeblock> %>
+
+The C<EVAL> directive is used to insert a value in the template at the moment in
+which it is encountered. The value inserted can be either a C<variable> that is
+either C<DEFINE>d elsewhere, or one of the constants defined by the
+Text::Templar class itself (see the L<codeblock attribute|"codeblock"> for more
+about the environment in which C<EVAL>s happen.
+
+B<Examples:>
+
+In the template:
+
+  Template:		<% EVAL $TEMPLATE_PATH %>
+  Parsed:		<% EVAL { scalar localtime } %>
+
+In the program:
+
+  $template = new Text::Templar '/www/templates/base.tmpl';
+
+Would render as:
+
+  Template:		/www/templates/base.tmpl
+  Parsed:		Mon Apr  3 16:01:53 2000
+
+=item B<INCLUDE directive>
+
+	<% INCLUDE <path> %>
+
+Parse and insert the specified template into the current template body.
+
+B<Examples:>
+
+In the template:
+
+  <HTML>
+  <HEAD>
+	<TITLE>The Page</TITLE>
+	<% INCLUDE /www/templates/metatags.incl %>
+  </HEAD>
+  <BODY>Aha!</BODY>
+  </HTML>
+
+In 'metatags.incl':
+
+	<META name="author" content="Bertrand Russell">
+	<META name="author-email" content="btrand@philosphers.org">
+
+Would render as:
+
+  <HTML>
+  <HEAD>
+	<TITLE>The Page</TITLE>
+	<META name="author" content="Bertrand Russell">
+	<META name="author-email" content="btrand@philosphers.org">
+  </HEAD>
+  <BODY>Aha!</BODY>
+  </HTML>
+
+=item B<QUERY directive>
+
+	<% QUERY <name> <question> <matchspec> %>
+
+Create and insert a query object into the template object. Query objects can be
+used to build interactive prompts, specify untainting tables, or to otherwise
+specify a means of extracting useful data from user input.
+
+B<Examples:>
+
+In the template:
+
+  <% QUERY clientName 'Your name: ' /([\w\s]+)}/ %>
+
+In the program:
+
+  my @queries = $template->queries;
+
+  foreach my $query ( @queries ) {
+	print $query->question;
+	chomp( my $response = <STDIN> );
+	redo unless $query->matchspec->matches( $response );
+  }
+
+=item B<ENV directive>
+
+	<% ENV <name> <format> %>
+	<% ENV <name> %>
+
+This directive inserts the environment variable specified by C<name> into the
+rendered template output after being formatted by the optional C<format> string.
+
+B<Examples:>
+
+In the template:
+
+  <% ENV HTTP_USER_AGENT %>
+
+Might render as:
+
+  Mozilla (X11; I; Linux 2.0.32 i586)
+
+=item B<META directive>
+
+	<% META	<name> <quotedArgument> %>
+
+Define metadata for the template. This can be used by the template creator to
+list template details which do not belong in the regular template attributes.
+
+B<Examples:>
+
+  <% META template-author 'Michael Granger' %>
+  <% META rscid q$Id: Templar.pod,v 1.8 2001/05/28 20:12:15 deveiant Exp $>
+
+=item B<INHERIT directive>
+
+	<% INHERIT <name> %>
+
+Inherit the content container with the specified C<name> from an enclosing
+template, if it exists. This allows you to propagate content from a container
+template to the subtemplates that it contains.
+
+B<Examples:>
+
+In the outer-most template:
+
+  The cutoff date will be: <% METHOD targetDate %><BR>
+  <% METHOD subTemplate %>
+
+In a subordinate template:
+
+  <% INHERIT targetDate %>
+  If you should wish to register before <% METHOD targetDate %>, then the place
+  to do so is: ...
+
+In the program:
+
+  $outermostTemplate->targetDate( '10/15/1999' );
+  $outermostTemplate->subTemplate( $subTemplateObject );
+  $outermostTemplate->render;
+
+Would render as:
+
+  The date will be: 10/15/1999
+  If you should wish to register before 10/15/1999, then the place
+  to do so is: ...
+
+=back
+
+=head2 Container Tags
+
+Container tags are directives which operate on a chunk of the template
+content. They define the content to operate on by delimiting it with the opening
+tag + attributes and a closing tag, just as in most markup languages. The
+closing tag is a tag of the same form, but without any attributes, and with
+either a '/' or an 'END ' prepended to the directive name.
+
+=over 4
+
+=item B<FOREACH directive>
+
+	<% FOREACH <iterator> [IN] <name> <methodchain> %>
+	<% FOREACH <iterator> [IN] <name> %>
+	<% FOREACH <iterator> [IN] DEREF <name> <methodchain> %>
+	<% FOREACH <iterator> [IN] DEREF <name> %>
+	<% FOREACH <name> %>
+
+The C<FOREACH> directive is an iterator directive for inserting a
+bit of content once for each item of a list.
+
+The first form calls the specified C<methodchain> on the C<name>d data, loops
+over each element of the return value, and inserts the contents contained within
+the opening and closing tags once for each iteration with the C<iterator> set to
+the current item. The 'C<IN>' is just syntactic sugar, and may be omitted.
+
+The second form does the same thing, but the C<name>d parameter is assumed to be
+the list of content to iterate over instead of data on which to apply a
+C<methodchain>.
+
+The third and fourth forms do the same thing as the first and second form, but
+cause the C<name>d data to be dereferenced first. This is sometimes useful with
+nested FOREACH directives, where the outer loop may be iterating over an array
+of arrayrefs, for example.
+
+The fifth form iterates over the C<name>d list, using the C<name> as the
+iterator inside each loop.
+
+Inside the contents of a FOREACH directive, there is a defined variable
+'$ITERATION' which can be used for counting the number of iterations
+that have been executed.
+
+The 'IN' in the first four forms is syntactic sugar, and may be omitted.
+
+B<Examples:>
+
+In the template:
+
+  <B>Team batting averages:</B>
+  <TABLE>
+	<TR>
+		<TH>Team Name</TH>
+		<TH>Batting Average</TH>
+	</TR>
+
+  <% FOREACH team IN league getTeams %>
+	<TR>
+		<TD><% METHODCALL team name %></TD>
+		<TD><% METHODCALL team getBattingAverage %></TD>
+	</TR>
+  <% END FOREACH %>
+
+  </TABLE>
+
+  <H2>The following links are related to this topic:</H2>
+  <% FOREACH link %>
+	<P><A href="<% METHOD link %>"><% METHOD link %></A></P>
+  <% /FOREACH %>
+
+In the program:
+
+  my $league = lookup League 15;
+  $template->league( $league );
+
+  my @links = qw{http://www.netscape.com/ http://www.leaguelink.com/ http://www.google.com/
+                 http://slashdot.org/ http://www.linux.com/};
+  $template->links( @links );
+
+Assuming the league had three teams, the rendered output might
+look like:
+
+  <B>Team batting averages:</B>
+  <TABLE>
+	<TR>
+		<TH>Team Name</TH>
+		<TH>Batting Average</TH>
+	</TR>
+
+  <% FOREACH team IN league getTeams %>
+	<TR>
+		<TD>Argyle Argonauts</TD>
+		<TD>.175</TD>
+	</TR>
+	<TR>
+		<TD>Rawndee Redhawks</TD>
+		<TD>.333</TD>
+	</TR>
+	<TR>
+		<TD>Billings Bobcats</TD>
+		<TD>.285</TD>
+	</TR>
+  <% END FOREACH %>
+
+  </TABLE>
+
+  <H2>The following links are related to this topic:</H2>
+	<P><A href="http://www.netscape.com/">http://www.netscape.com/</A></P>
+	<P><A href="http://www.leaguelink.com/">http://www.leaguelink.com/</A></P>
+	<P><A href="http://www.google.com/">http://www.google.com/</A></P>
+	<P><A href="http://slashdot.org/">http://slashdot.org/</A></P>
+	<P><A href="http://www.linux.com/">http://www.linux.com/</A></P>
+	<P><A href="<% METHOD link %>"><% METHOD link %></A></P>
+
+=item B<JOIN directive>
+
+	<% JOIN <iterator> [IN] <name> <methodchain> [WITH] <quotedArgument> %>
+	<% JOIN <iterator> [IN] <name> [WITH] <quotedArgument> %>
+	<% JOIN <name> [WITH] <quotedArgument> %>
+
+The C<JOIN> directive acts like a C<FOREACH> iterator that joins the rendered
+output of each of its loops together with the string specified by the
+C<quotedArgument>.
+
+The operation of the join directive is otherwise the same as that for the
+C<FOREACH> directive.
+
+The words in brackets are syntactic sugar, and may be omitted.
+
+B<Examples:>
+
+In the template:
+
+  <% JOIN team IN league getTeams WITH q{, } %>
+	<A href="http://leaguelink.com/homepages/<% METHOD team url %>"><% METHOD team name %></A>
+  <% END JOIN %>
+
+Might render something like this:
+
+	<A href="http://leaguelink.com/homepages/1024">Bruins</A>, 
+	<A href="http://leaguelink.com/homepages/768">Argonauts</A>,
+	<A href="http://leaguelink.com/homepages/512">Redhawks</A>,
+	<A href="http://leaguelink.com/homepages/256">Bobcats</A>
+
+=item B<SORT directive>
+
+	<% SORT <iterator> [IN] <name> <methodchain> [WITH] <codeblock> %>
+	<% SORT <iterator> [IN] <name> [WITH] <codeblock> %>
+	<% SORT <name> [WITH] <codeblock> %>
+
+The C<SORT> directive is used to sort a content array, just as in Perl's C<sort>
+function.
+
+The first form calls the specified C<methodchain> on the C<name>d object and
+uses the C<codeblock> to sort the list. The two elements to be compared are
+passed as the first two arguments, or can be accessed as in Perl's sort with the
+variables C<$a> and C<$b>. A return value of less than zero indicates that the
+first argument should be sorted before the second, a return value of C<0>
+indicates that the two items are equal, and a return value of greater than zero
+indicates the second item should be sorted before the first. Once sorted, the
+array of values are assigned to the temporary C<iterator>, and the contents
+between the opening and closing C<SORT> tags is inserted once into the rendered
+output.
+
+The second form sorts in the same manner, but without a methodchain call on the
+C<name>d parameter.
+
+The third form substitutes the sorted list for the specified name inside the
+contained content instead of using an C<iterator>.
+
+The words in brackets are syntactic sugar, and may be omitted.
+
+B<Examples:>
+
+	<% SORT artistNames WITH { $a cmp $b } %>
+	<% SORT album IN collection albums WITH { $a->title cmp $b->title } %>
+
+=item B<MAP directive>
+
+	<% MAP <iterator> [IN] <name> <methodchain> [WITH] <codeblock> %>
+	<% MAP <name> [WITH] <codeblock> %>
+
+The C<MAP> directive is used to apply some transform function to each element of
+an array, just as in Perl's C<map> function.
+
+The first form calls the specified C<methodchain> on the C<name>d object and
+executes the C<codeblock> for each element. It assigns the array of return
+values of the C<codeblock> calls to the temporary C<iterator>, and then inserts
+the contents contained between the opening and closing tags once.
+
+The second form transforms the C<name>d content with the specified C<codeblock>
+and temporarily substitutes the transformed array for the original in the
+context of its beginning and end tags.
+
+The words in brackets are syntactic sugar, and may be omitted.
+
+B<Examples:>
+
+In the template:
+
+  <!-- A Schwartzian Transform to sort players by first name -->
+  <% MAP players {[ $_[0], $_[0]->name ]} %>
+	<% SORT players { $[0]->[1] cmp $_[1]->[1] } %>
+	  <% MAP players { $_->[0] } %>
+		<% FOREACH player IN players %>
+	  <% END MAP %>
+	<% END SORT %>
+  <% END MAP %>
+
+=item B<GREP directive>
+
+	<% GREP <iterator> [IN] <name> <methodchain> [WITH] <codeblock> %>
+	<% GREP <name> [WITH] <codeblock> %>
+
+The C<GREP> directive is used to modify a content array using C<codeblock> as a
+filter function.
+
+The first form calls the specified C<methodchain> on the C<name>d object and
+executes the C<codeblock> for each element. If the C<codeblock> returns a true
+value, the value is retained and is added to the contents for the block. If it
+returns a false value, the item is omitted from the contents. Each retained item
+is added to the temporary C<iterator> array, and the contents of the tag are
+inserted once.
+
+The second form filters the C<name>d content with the specified C<codeblock>
+and temporarily substitutes the filtered array for the original in the
+context of its beginning and end tags.
+
+B<Examples:>
+
+In the template:
+
+  <!-- Eliminate teams who haven't registered from the list -->
+  <P>Registered teams:</P>
+  <% GREP teams IN league getTeams WITH { $_[0]->isRegistered } %>
+	<% FOREACH team IN teams %><% METHODCALL team name %><BR><% END FOREACH %>
+  <% END GREP %>
+
+=item B<COMMENT directive>
+
+	<% COMMENT %>
+
+The C<COMMENT> directive is used for inserting content into the template which
+do not affect the template object at all. Comments are stripped during
+preprocessing, so can be used to insert comments which do not show up in the
+rendered output, or to temporarily remove a section of template content from the
+object.
+
+B<Examples:>
+
+In the template:
+
+  <% COMMENT %>
+    Template RCSID: $Id: Templar.pod,v 1.8 2001/05/28 20:12:15 deveiant Exp $
+  <% /COMMENT %>
+
+  <P>Something</P>
+
+Would render as:
+
+  <P>Something</P>
+
+=item B<MAXLENGTH directive>
+
+  <% MAXLENGTH <object> <methodchain> %>
+  <% MAXLENGTH <integer> %>
+  <% MAXLENGTH <name> %>
+  <% MAXLENGTH <codeblock> %>
+  <% MAXLENGTH <variable> %>
+
+The C<MAXLENGTH> directive limits the character length of the rendered contents
+to the value specified, including spaces and newlines. The value may be
+specified in one of five ways: the result of a methodchain, a literal integer,
+the value passed to a method call, the result of a code block, or the value of a
+specified variable.
+
+B<Examples:>
+
+In the template:
+
+  <TD><% MAXLENGTH maxCellWidth %><% METHOD orgName %><% END MAXLENGTH %></TD>
+
+In the program:
+
+  $template->orgName( 'Crimson Permanent Assurance' );
+  $template->maxCellWidth( 10 );
+
+Would render as:
+
+  <TD>Crimson Pe</TD>
+
+=back
+
+=head2 Conditional Tags
+
+Conditional tags are groups of directives which contain optional content
+delimited, as with container directives, with the opening tag + attributes and a
+closing tag. The closing tag of any conditional block is an C<E<lt>% END
+IF %E<gt>> or C<E<lt>% /IF %E<gt>> tag.
+
+=over 4
+
+=item B<IF directive>
+
+	<% IF <name> %>
+	<% IF <name> [MATCHES] <matchspec> %>
+	<% IF <object> <methodchain> %>
+	<% IF <object> <methodchain> [AMTCHES] <matchspec> %>
+	<% IF <variable> %>
+	<% IF <variable> [MATCHES] <matchspec> %>
+	<% IF <codeblock> %>
+
+The C<IF> directive without a C<MATCHES> clause evaluates the last-inserted
+content of the specified C<name>, the specified C<methodchain> of the
+last-inserted C<object>, or the specified C<codeblock> or C<variable> in its
+attributes and includes the contained content if it evaluates to a true value.
+
+With a MATCHES clause, the contained content is included if B<all> of the
+content of the specified name, the specified C<methodchain> of the last-inserted
+C<object>, or the specified C<codeblock> or C<variable> match the
+C<matchspec>. If the C<matchspec> is a regexp, each item must match it, if the
+C<matchspec> is an array or a hash, each item must be equal (stringwise) to at
+least one of the items in the array or one of the keys of the hash.
+
+The words in brackets are syntactic sugar, and may be omitted.
+
+=item B<ELSE directive>
+
+	<% ELSE %>
+
+The content contained after the C<ELSE> directive is executed if none of the
+conditional clauses before it have been true.
+
+=item B<ELSIF directive>
+
+	<% ELSIF <name> %>
+	<% ELSIF <name> [MATCHES] <matchspec> %>
+	<% ELSIF <object> <methodchain> %>
+	<% ELSIF <object> <methodchain> [AMTCHES] <matchspec> %>
+	<% ELSIF <variable> %>
+	<% ELSIF <variable> [MATCHES] <matchspec> %>
+	<% ELSIF <codeblock> %>
+
+The content contained after the C<ELSIF> directive is executed if none of the
+conditional clauses before it have been true and the condition matches using the
+same rules as the C<IF> directive.
+
+The words in brackets are syntactic sugar, and may be omitted.
+
+=back
+
+B<Examples:>
+
+In the template:
+
+  <% IF shopName %><H1>Welcome to <% METHOD shopName %></H1><% END IF %>
+
+  <P>We are currently <% IF {
+		my $hour = (localtime)[2]; $hour < 19 && $hour > 6 } %>
+	open
+  <% ELSIF { (localtime)[6] == 6 && (localtime)[2] < 21 && (localtime)[2] > 6 } %>
+    open
+  <% ELSE %>
+	closed
+  <% END IF %>.</P>
+
+Between 7 AM and 7 PM, or between 7 AM and 9 PM on Saturday would render as:
+
+  <H1>Welcome to Binghjii's Bazaar of Wonder</H1>
+
+  <P>We are currently open.</P>
+
+and any other time would render as:
+
+  <H1>Welcome to Binghjii's Bazaar of Wonder</H1>
+
+  <P>We are currently closed.</P>
+
+B<A more complex example:>
+
+  <% IF request header_in('host') matches /^dev/ %>
+	 <P align="center"><STRONG>This is the development server.</STRONG></P>
+  <% ELSIF request connection.remote_host matches /internal\.net/ %>
+    <P align="center"><A href="viewRequest">View this request</A></P>
+  <% END IF %>
+
+=head1 FUNCTIONS
+
+=head2 Protected Functions
+
+=over 4
+
+=item I<_buildParseError( \@errors )>
+
+Given an array of parser errors, return a formatted error message composed
+of all of them.
+
+=back
+
+=head1 METHODS
+
+=over 4
+
+=item I<addContentNode( $nodeName )>
+
+Add a content container for the node specified if it doesn't already
+exist. Returns a true value on success, and throws an exception on any
+error.
+
+=item I<addInheritedNode( $nodeName )>
+
+Add an inherited content container for the node specified if it doesn't
+already exist. Returns a true value on success, and throws an exception
+on any error.
+
+=item I<addNodeContent( $nodeName, @contents )>
+
+Add elements to the contents of the node specified. Returns the number of
+elements after adding the ones given. Throws an exception on any error.
+
+=item I<cacheSource( $boolean )>
+
+Get/set the attribute which turns source caching on or off. If this is set
+to a true value, the template source from any file will be cached after
+loading it the first time, and will be reused the next time the template
+is requested. If the file the source is from changes, the caching
+mechanism will notice and abandon the cached source. (Translucent method)
+
+=item I<cacheTrees( $boolean )>
+
+Get/set the attribute which turns syntax tree caching on or off. If this is
+set to a true value, the template object's syntax tree will be reused
+the next time it is loaded, skipping the parse phase altogether. Note
+that time-sensitive C<EVAL>s and the like will need to be placed into
+C<DELAYED> blocks if you are caching trees. (Translucent method)
+
+=item I<clear( undef )>
+
+Clear the content from this template.
+
+=item I<commentClose( $string )>
+
+Get/set the comment close string used when rendering comments into the
+output. Defaults to 'C< --E<gt>>', which is the HTML comment close
+string.
+
+=item I<commentOpen( $string )>
+
+Get/set the comment open string used when rendering comments into the
+output. Defaults to 'C<E<lt>!-- >', which is the HTML comment open
+string. (Translucent method)
+
+=item I<defines( \%variableDefinitions )>
+
+Get/set the template variables associated with the template. The defines
+hash is a hash of variable name =E<gt> variable value pairs. These
+variables will be visible to any code evaluated in the template's
+scope. If a variable does not have a perl-style variable prefix, it is
+assumed to be a scalar value.  (Translucent method)
+
+=item I<deleteDefines( @variableNames )>
+
+Remove and return the specified key-value pairs from the template
+definitions hash. (Translucent method)
+
+=item I<deleteMetafields( @fieldNames )>
+
+Remove and return the named values from the object's metafields hash.
+(Translucent method)
+
+=item I<errorOutput( $outputConfig )>
+
+Get/set the errorOutput attribute. This attribute controls where the output
+from errors generated in the template object end up. Setting it to
+'C<stderr>' (the default) causes errors to be output on STDERR. Setting
+it to 'C<inline>' renders the errors as comments (see C<commentOpen()>
+and C<commentClose()>) into the output of the template at the place
+where they occur. If C<errorOutput()> is 'C<tailed>', the errors will be
+rendered as above, but they will occur at the end of the template's
+output. Setting C<errorOutput()> to 'C<ignore>' will cause errors to be
+ignored silently. Any other value is treated as the filename of some
+sort of log, and errors are piped to it as they occur. Setting this to a
+filename which cannot be opened results in a fatal exception being
+thrown. (Translucent method)
+
+=item I<filterSyntaxTree( \@nodes, $phaseName )>
+
+Filter the given nodes by calling the appropriate method for each node as
+indicated by the phase name. Returns the filtered nodes, and throws an
+exception on any error.
+
+=item I<getContentHash( undef )>
+
+Returns a hash of content that is the result of merging this template's
+content and any content inherited from containing templates
+
+=item I<getMetafields( @fieldNames )>
+
+Return the values of the specified metadata fields. (Translucent method)
+
+=item I<getNodeContent( $nodeName )>
+
+Get the content given by the user for the specified node, if any. Returns
+the list of content, or throws an exception on any error.
+
+=item I<includePath( \@newPath )>
+
+Get/set the list of directories to check when searching for template
+files. The path is a reference to an array of directories.  (Translucent
+method)
+
+=item I<load( $sourceFileName | \@sourceArray )>
+
+Load template data from a file or arrayref, parse it, and create the
+object's structure by examining the resulting syntax tree. Returns a
+true value if all goes well, or throws an exception on any error.
+
+=item I<maxIncludeDepth( $depth )>
+
+Get/set the maximum include depth. If the number of recursive includes for a
+given template exceeds this value, an exception is generated and the
+include will fail. The default value is 15. (Translucent method)
+
+=item I<metafields( \%newFields )>
+
+Get/set the hash of metadata associated with the template. (Translucent
+method)
+
+=item I<missingMethodIsFatal( $boolean )>
+
+Get/set the flag that controls what happens when a method is called on the
+template which hasn't been defined in the template file. If this is set
+to a false value (which is the default), the call won't do anything. If
+it is set to a true value, a call to an undefined method will throw an
+exception.
+
+=item I<parse( $sourcePath | \@sourceArray )>
+
+Given an absolute path to a template, or an arrayref of template content,
+create an initial syntax tree and preprocess it to create the object
+attributes necessary to interact with the template. Returns a processed
+syntax tree.
+
+=item I<popIncludePath( undef )>
+
+Remove and return the last element of the include path. (Translucent method)
+
+=item I<popQueries( undef )>
+
+Remove and return the last element of the query list. (Translucent method)
+
+=item I<popSyntaxTree( undef )>
+
+Remove and return the last element of the syntax tree. (Translucent method)
+
+=item I<preprocessCOMMENT( $node )>
+
+Process the given 'COMMENT' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessDEFINE( $node )>
+
+Process the given 'DEFINE' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessDELAYED( $node )>
+
+Process the given 'DELAYED' node in the parse phase. The DELAYED tag just
+delays the processing of the nodes it contains until the next phase, so
+this method just returns the DELAYED node's subnodes. Throws an
+exception on any error.
+
+=item I<preprocessDUMP( $node )>
+
+Process the given 'DUMP' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessELSE( $node )>
+
+Process the given 'ELSE' node in the parse phase. The else node doesn't
+require any preprocessing, so we just return it to its native habitat
+unharmed. 'Say, Terri. Look at that deadly poisonous ELSE directive:
+what a beautiful animal.'
+
+=item I<preprocessELSIF( $node )>
+
+Process the given 'ELSIF' node in the parse phase.
+
+=item I<preprocessENV( $node )>
+
+Process the given 'ENV' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessEVAL( $node )>
+
+Process the given 'EVAL' node in the parse phase. Returns the result of
+evaluating the codeblock or variable specified in the node. Throws an
+exception on any error.
+
+=item I<preprocessFOREACH( $node )>
+
+Process the given 'FOREACH' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessGREP( $node )>
+
+Process the given 'GREP' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessIF( $node )>
+
+Process the given 'IF' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessINCLUDE( $node )>
+
+Process the given 'INCLUDE' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessINHERIT( $node )>
+
+Process the given 'INHERIT' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessJOIN( $node )>
+
+Process the given 'JOIN' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessMAP( $node )>
+
+Process the given 'MAP' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessMAXLENGTH( $node )>
+
+Process the given 'MAXLENGTH' node in the parse phase. Just returns the
+node. Throws an exception on any error.
+
+=item I<preprocessMETA( $node )>
+
+Process the given 'META' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessMETHOD( $node )>
+
+Process the given 'METHOD' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessMETHODCALL( $node )>
+
+Process the given 'METHODCALL' node in the parse phase. Returns the
+(possibly modified?)  node if it should be kept in the syntax tree, and
+returns the undefined value otherwise. Throws an exception on any error.
+
+=item I<preprocessQUERY( $node )>
+
+Process the given 'QUERY' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessSORT( $node )>
+
+Process the given 'SORT' node in the parse phase. Throws an exception on
+any error.
+
+=item I<preprocessSTOP( $node )>
+
+Process the given 'STOP' node in the parse phase. Since an end node is only
+meaningful in the render phase, this method just returns the specified
+node. Throws an exception on any error.
+
+=item I<propagateContent( \%contentHash )>
+
+Add the key/value pairs from the given hash to this template's content if
+the key has been specified as one that should be inherited. Returns the
+number of content pairs propagated, or throws an exception on any error.
+
+=item I<pushIncludePath( @directories )>
+
+Add the specified directories on to the end of the include path. Returns the
+total number of paths after adding. (Translucent method)
+
+=item I<pushQueries( @nodes=Text::Templar::QUERY )>
+
+Add the specified nodes on to the end of the query list. Returns the total
+number of nodes after adding. (Translucent method)
+
+=item I<pushSyntaxTree( @nodes=Text::Templar::node )>
+
+Add the specified nodes on to the end of the syntax tree. Returns the total
+number of nodes after adding. (Translucent method)
+
+=item I<queries( \@queryNodes=Text::Templar::QUERY )>
+
+Get/set the array of query nodes for this template. Query nodes are
+generated for C<QUERY> directives in the template. See X<NODE OBJECTS>
+for more about how to use C<QUERY> nodes. (Translucent method)
+
+=item I<render( undef )>
+
+Returns the syntax tree rendered into the final output form.
+
+=item I<renderCOMMENT( $node )>
+
+Process the given 'COMMENT' node in the render phase. Throws an exception on
+any error.
+
+=item I<renderDEFINE( $node )>
+
+Process the given 'DEFINE' node in the render phase. Throws an exception on
+any error.
+
+=item I<renderDELAYED( $node )>
+
+Process the given 'DELAYED' node in the render phase. Since the DELAY is
+supposed to postpone processing until the render phase, encountering a
+DELAY node here is an error, so all this method does is generate an
+exception with a message to that effect.
+
+=item I<renderDUMP( $node )>
+
+Process the given 'DUMP' node in the render phase. Returns the content
+that should be placed in the position occupied by the DUMP tag. Throws
+an exception on any error.
+
+=item I<renderELSE( $node )>
+
+Process the given 'ELSE' node in the parse phase. Rendering an ELSE
+outside of an enclosing IF is an error, so this method just generates an
+exception with a message to that effect.
+
+=item I<renderELSIF( $node )>
+
+Process the given 'ELSIF' node in the parse phase.  Rendering an ELSIF
+outside of an enclosing IF is an error, so this method just generates an
+exception with a message to that effect.
+
+=item I<renderENV( $node )>
+
+Process the given 'ENV' node in the render phase. Throws an exception on
+any error.
+
+=item I<renderEVAL( $node )>
+
+Process the given 'EVAL' node in the render phase. Returns the result of
+evaluating the codeblock or variable specified in the node. Throws an
+exception on any error.
+
+=item I<renderFOREACH( $node )>
+
+Process the given 'FOREACH' node in the render phase. Throws an exception on
+any error.
+
+=item I<renderGREP( $node )>
+
+Process the given 'GREP' node in the render phase. Throws an exception on
+any error.
+
+=item I<renderIF( $node )>
+
+Process the given 'IF' node in the render phase. Throws an exception on
+any error.
+
+=item I<renderINCLUDE( $node )>
+
+Process the given 'INCLUDE' node in the render phase. Throws an exception on
+any error.
+
+=item I<renderINHERIT( $node )>
+
+Process the given 'INHERIT' node in the render phase. Since inheritance
+happens before the parse phase, this generates an exception.
+
+=item I<renderJOIN( $node )>
+
+Process the given 'JOIN' node in the render phase. Throws an exception on
+any error.
+
+=item I<renderMAP( $node )>
+
+Process the given 'MAP' node in the render phase. Throws an exception on
+any error.
+
+=item I<renderMAXLENGTH( $node )>
+
+Process the given 'MAXLENGTH' node in the render phase. Throws an exception on
+any error.
+
+=item I<renderMETA( $node )>
+
+Process the given 'META' node in the render phase. Since metafields are
+really only useful before the render phase, this method just returns
+the empty list. Throws an exception on any error.
+
+=item I<renderMETHOD( $node )>
+
+Process the given 'METHOD' node in the render phase. Returns the content
+that should be placed in the position occupied by the METHOD tag. Throws
+an exception on any error.
+
+=item I<renderMETHODCALL( $node )>
+
+Process the given 'METHODCALL' node in the render phase. Returns the content
+that should be placed in the position occupied by the METHODCALL
+tag. Throws an exception on any error.
+
+=item I<renderQUERY( $node )>
+
+Process the given 'QUERY' node in the render phase. Since queries are really
+only useful before the render phase, this method just returns the empty
+list. Throws an exception on any error.
+
+=item I<renderSORT( $node )>
+
+Process the given 'SORT' node in the render phase. Throws an exception on
+any error.
+
+=item I<renderSTOP( $node )>
+
+Process the given 'STOP' node in the render phase.  Since an end node indicates
+the end of the syntax tree while in the parse phase, we shouldn't ever
+reach this method, and all this method does is throw an exception with a
+message to that effect.
+
+=item I<setDefines( %variablePairs )>
+
+Set the value of the specified variable pairs in the template definitions
+hash (Translucent method)
+
+=item I<setMetafields( %fieldPairs )>
+
+Set the value of the metadata field specified to the specified
+value. (Translucent method)
+
+=item I<setNodeContent( $nodeName, @contents )>
+
+Set the contents of the node specified to the given contents. Returns the
+number of elements after setting. Throws an exception on any error.
+
+=item I<shiftIncludePath( @directories )>
+
+Remove and return the first element of the template include
+path. (Translucent method)
+
+=item I<shiftQueries( @nodes=Text::Templar::QUERY )>
+
+Remove and return the first element of the query list. (Translucent method)
+
+=item I<shiftSyntaxTree( @nodes=Text::Templar::node )>
+
+Remove and return the first element of the syntax tree. (Translucent method)
+
+=item I<sliceIncludePath( @indexes )>
+
+Returns the directories specified by the indexes from the include path
+without removing them from the path. (Translucent method)
+
+=item I<sliceQueries( @indexes )>
+
+Return the query list nodes specified by the indexes from the query list
+without removing them. (Translucent method)
+
+=item I<sliceSyntaxTree( @indexes )>
+
+Return the syntax tree nodes specified by the indexes from the syntax tree
+without removing them. (Translucent method)
+
+=item I<sourceName( $pathname )>
+
+Get/set the path name of the source file the template was/should be loaded
+from. Note that changing this value after loading a template will not
+have any effect on the actual template content. Setting this value
+before calling C<load()> will cause the template source to be loaded
+from the specified file. (Translucent method)
+
+=item I<spliceIncludePath( $offset, $length, @newDirs )>
+
+Removes the directories specified by offset and length from the include
+path, replacing them with the new directories, if specified. This method
+works similarly to Perl's C<splice()>. (Translucent method)
+
+=item I<spliceQueries( $offset, $length, @newnodes=Text::Templar::QUERY )>
+
+Removes the nodes specified by offset and length from the query list,
+replacing them with the new nodes, if specified. This method works
+similarly to Perl's C<splice()>. (Translucent method)
+
+=item I<spliceSyntaxTree( $offset, $length,@newnodes=Text::Templar::node )>
+
+Removes the nodes specified by offset and length from the syntax tree,
+replacing them with the new nodes, if specified. This method works
+similarly to Perl's C<splice()>. (Translucent method)
+
+=item I<syntaxTree( \@syntaxTree=Text::Templar::node )>
+
+Get/set the syntaxTree that the object uses in rendering. By getting/setting
+this attribute, you can prune elements out of the rendered
+content. (Translucent method)
+
+=item I<undefinedValue( $newValue )>
+
+Get/set the value that is inserted when templar encounters an undefined
+value. Defaults to the empty string.
+
+=item I<unshiftIncludePath( @directories )>
+
+Add the specified directories onto the beginning of the include
+path. Returns the number of directories in the tree after
+adding. (Translucent method)
+
+=item I<unshiftQueries( @queries=Text::Templar::QUERY )>
+
+Add the specified nodes onto the top of the query list. Returns the number
+of nodes in the list after adding. (Translucent method)
+
+=item I<unshiftSyntaxTree( @args )>
+
+Add the specified nodes onto the top of the syntax tree. Returns the number
+of nodes in the tree after adding. (Translucent method)
+
+=back
+
+=head2 Constructor Methods
+
+=over 4
+
+=item I<new( [ $sourceFileName | \@sourceArray ][, %configHash] )>
+
+Constructs and returns a new template object. If the optional sourceFileName
+or sourceArray argument is specified, the template content is parsed. If
+the optional configHash contains any key-value pairs, the per-object
+attributes specified are set. Throws an exception on any error.
+
+=back
+
+=head2 Overridden Methods
+
+=over 4
+
+=item I<getDefines( @defineNames ) ### Get the evaluated values of the defines specified. Returns the values if ###		called in list context, and the number of defines returned in scalar ###		context. Throw an exception on any error.>
+
+=back
+
+=head2 Private Methods
+
+=over 4
+
+=item I<__closureCount( @args )>
+
+Get/set the number of closures that have been constructed. This is used for
+constructing a unique namespace for each closure. (Translucent method)
+
+=back
+
+=head2 Private Readonly Methods
+
+=over 4
+
+=item I<__RCSID( @args )>
+
+Get the RCS id string for Text::Templar.
+
+=item I<__VERSION( @args )>
+
+Get the version string for Text::Templar.
+
+=back
+
+=head2 Private Static Methods
+
+=over 4
+
+=item I<__ErroutIsInitialized( @args )>
+
+Get/set the flag that denotes that the error output filehandle has been
+initialized.  (Translucent method)
+
+=item I<__InitErrorOutput( undef )>
+
+Nasty kluge to assure that error output is initialized in the case that it's
+not explicitly configured either before or during the first constructor
+call.
+
+=back
+
+=head2 Protected Methods
+
+=over 4
+
+=item I<_buildClosure( $code )>
+
+Builds a returns a closure with the code specified.
+
+=item I<_buildComment( $message )>
+
+Builds and returns a comment in the manner defined by the object's
+commentOpen and commentClose attributes. Throws an exception on any
+error.
+
+=item I<_depth( @args )>
+
+Get/set the current include depth. (Translucent method)
+
+=item I<_deref( $value )>
+
+Handle dereference of a target value for METHODCALL DEREF <name>, FOREACH
+DEREF <name>, etc.
+
+=item I<_errorOutputFh( @args )>
+
+Get/set the output filehandle that should be used for printing exceptions as
+they occur, if any. See C<errorOutput()> for more info. (Translucent
+method)
+
+=item I<_evaluateCondition( $node )>
+
+Evaluate the matchSpec associated with the given node with the node's
+content, returning '1' if the condition is true, and the empty list if
+it is not.
+
+=item I<_findFile( $filename )>
+
+Given a possibly relative filename, attempt to figure out an absolute one
+
+and return it.
+
+=item I<_getEvaluatedValue( $code )>
+
+Evaluates the specified code inside a private environment and returns the
+result. Throws an exception if the code to be evaluated produces an
+error, and on any other error.
+
+=item I<_getFileHandle( $filename )>
+
+Opens and returns an IO object opened to the file specified.
+
+=item I<_getRenderedEvaluatedValue( $code )>
+
+Evaluates the specified code inside a private environment, renders it, and
+returns the result. Handles exceptions generated by the specified code
+by rendering them according to the errorOutput configuration. Throws an
+exception on any error.
+
+=item I<_getRenderedValues( @values )>
+
+Render each value into a suitable string for output. Handles simple scalar
+values, array references, hash references, templar objects, exceptions,
+and other objects of a class that defines a C<stringify()>,
+C<as_string>, C<asString>, or C<render> method. Returns an array of
+rendered values if called in list context, or the rendered values joined
+together in a a single string if called in scalar context. Throws an
+exception on any error.
+
+=item I<_getStderrHandle( undef )>
+
+Opens and returns an IO object opened write-only on STDERR.
+
+=item I<_handleException( $exception=Text::Templar::Exception, $mode )>
+
+Take action on an exception that occurs in a template. The action taken is
+configured via the errorOutput() configuration method. Returns a handled
+version of the exception (either the exception object or the empty list
+if the exception object should be ignored at the current point of
+execution).
+
+=item I<_loadFile( $path )>
+
+Load the file specified by path and return its contents as an array (list
+context) or arrayref (scalar context). Throws an exception on any error.
+
+=item I<_parseArray( \@contentArray )>
+
+Parse an array reference of template source, returning the
+resultant syntax tree. Throws an exception on any error.
+
+=item I<_parseFile( $filename )>
+
+Load and parse a file, returning the resultant syntax tree. Throws an
+exception on any error.
+
+=item I<_parseTemplateSource( \@source, $sourceName )>
+
+Parse the given source and return a syntax tree
+
+=item I<_parsed( @args )>
+
+Get/set the flag that designates the template object as parsed. (Translucent
+method)
+
+=item I<_popTailedErrors( undef )>
+
+Remove and return the last exception from the tailed exception
+list. (Translucent method)
+
+=item I<_pushTailedErrors( @exceptions=Text::Templar::Exception )>
+
+Add the specified exceptions on to the end of the tailed error list. Returns the
+total number of exceptions after adding. (Translucent method)
+
+=item I<_shiftTailedErrors( @exceptions=Text::Templar::Exception )>
+
+Remove and return the first element of the tailed exception list.
+(Translucent method)
+
+=item I<_sliceTailedErrors( @indexes )>
+
+Return the query list exceptions specified by the indexes from the tailed
+exceptions list without removing them. (Translucent method)
+
+=item I<_spliceTailedErrors( $offset, $length, @exceptions=Text::Templar::Exception )>
+
+Removes the exceptions specified by offset and length from the tailed
+exceptions list, replacing them with the new exceptions, if
+specified. This method works similarly to Perl's
+C<splice()>. (Translucent method)
+
+=item I<_tailedErrors( \@exceptions=Text::Templar::Exception )>
+
+Get/set the array of exception objects to be appended to the end of the
+rendered output. (Translucent method)
+
+=item I<_traverseMethodChain( $object, \@methodChain=Text::Templar::method )>
+
+Traverse each element in a methodchain, calling a method or fetching a value
+from a reference for each one.
+
+=item I<_unshiftTailedErrors( @exceptions=Text::Templar::Exception )>
+
+Add the specified exceptions onto the top of the tailed exception
+list. Returns the number of exceptions in the list after adding.
+(Translucent method)
+
+=back
+
+=head2 Protected Static Methods
+
+=over 4
+
+=item I<_GetParser( undef )>
+
+Get the parser object for parsing templar templates. Constructs a new parser
+if necessary. Return the parser object, and throws an exception on any
+error.
+
+=item I<_Parser( $newParser=Text::Templar::Parser )>
+
+Get/set the parser object used to generate syntax trees. (Translucent method)
+
+=back
+
+=head2 Proxy Methods
+
+=over 4
+
+=item I<AUTOLOAD( @args )>
+
+Handles method calls for the phases we don't have explicit handlers for, and
+client calls to directive methods.
+
+=back
+
+=cut
+

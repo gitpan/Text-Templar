@@ -1,0 +1,8 @@
+Test 1: <% METHOD simpleMethod %>
+Test 2: <% METHOD formattedMethod '%04.3d' %>
+Test 3: <% METHOD codeblockMethod { 
+	 my ( $template, $node, $value ) = @_; 
+	 return join '', reverse split(//, $value); 
+} %>
+
+
